@@ -1,0 +1,4414 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GoFa - Dashboard Thống kê Thiết bị & Phiên bản Hệ điều hành</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+    }
+    .tab-btn.active {
+      background-color: #1e293b;
+      color: #ffffff;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+    .chart-btn.active {
+      background-color: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+    }
+    .bar-rect {
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .bar-rect:hover {
+      filter: brightness(1.15);
+      transform: translateY(-2px);
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    #chart-tooltip {
+      pointer-events: none;
+      transition: opacity 0.15s ease, transform 0.1s ease;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 p-3 sm:p-6 lg:p-8">
+
+  <!-- FLOATING TOOLTIP -->
+  <div id="chart-tooltip" class="fixed opacity-0 z-50 bg-slate-900 text-white text-xs rounded-xl p-3 shadow-xl border border-slate-700 max-w-xs">
+    <div id="tt-title" class="font-bold text-sm text-white mb-1"></div>
+    <div id="tt-model" class="text-slate-400 mb-1 font-mono text-[11px]"></div>
+    <div class="flex items-center justify-between gap-4 py-0.5 border-t border-slate-800 pt-1 text-slate-300">
+      <span>Hệ điều hành:</span>
+      <span id="tt-os" class="font-semibold text-blue-300"></span>
+    </div>
+    <div class="flex items-center justify-between gap-4 py-0.5 text-slate-300">
+      <span>Người dùng:</span>
+      <span id="tt-users" class="font-bold text-white text-sm"></span>
+    </div>
+    <div class="flex items-center justify-between gap-4 py-0.5 text-slate-300">
+      <span>Tỷ lệ toàn kỳ:</span>
+      <span id="tt-pct" class="font-semibold text-emerald-400"></span>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="max-w-7xl mx-auto mb-6">
+    <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">GoFa Analytics</span>
+          <span class="text-xs text-slate-400">01/08/2026 – 06/11/2026</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Báo Cáo & Biểu Đồ Thống Kê Thiết Bị GoFa</h1>
+        <p class="text-sm text-slate-500 mt-1">Phân tích trực quan tên thương mại, mã model, phiên bản iOS & Android từ dữ liệu 64,951 người dùng.</p>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <a href="Thong_ke_thiet_bi_iOS_va_Android_GoFa.xlsx" download class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Tải File Excel 2 Sheet (.xlsx)
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- KPI CARDS -->
+  <section class="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+      <div class="text-xs font-medium text-slate-500 uppercase tracking-wider">Tổng người dùng toàn kỳ</div>
+      <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">64,951</div>
+      <div class="text-xs text-slate-500 mt-1 flex items-center gap-1">
+        <span class="font-semibold text-emerald-600">100%</span> toàn bộ thiết bị
+      </div>
+    </div>
+    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+      <div class="text-xs font-medium text-slate-500 uppercase tracking-wider flex items-center justify-between">
+        <span>Nền tảng Android</span>
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+      </div>
+      <div class="text-2xl sm:text-3xl font-extrabold text-emerald-600 mt-2">32,543</div>
+      <div class="text-xs text-slate-500 mt-1">
+        Chiếm <strong class="text-slate-800">50.10%</strong> (2,051 model máy)
+      </div>
+    </div>
+    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+      <div class="text-xs font-medium text-slate-500 uppercase tracking-wider flex items-center justify-between">
+        <span>Nền tảng iOS (Apple)</span>
+        <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+      </div>
+      <div class="text-2xl sm:text-3xl font-extrabold text-blue-600 mt-2">32,384</div>
+      <div class="text-xs text-slate-500 mt-1">
+        Chiếm <strong class="text-slate-800">49.86%</strong> (64 model Apple)
+      </div>
+    </div>
+    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+      <div class="text-xs font-medium text-slate-500 uppercase tracking-wider flex items-center justify-between">
+        <span>Kết nối CarPlay</span>
+        <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+      </div>
+      <div class="text-2xl sm:text-3xl font-extrabold text-indigo-600 mt-2">10,939</div>
+      <div class="text-xs text-slate-500 mt-1">
+        Chiếm <strong class="text-slate-800">16.84%</strong> toàn hệ thống
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTROLS & PLATFORM TABS -->
+  <section class="max-w-7xl mx-auto mb-6">
+    <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0" id="platform-tabs">
+        <button onclick="setPlatform('all')" id="tab-all" class="tab-btn active px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition border border-slate-200">
+          Tất cả thiết bị (Gộp cả iOS & Android)
+        </button>
+        <button onclick="setPlatform('ios')" id="tab-ios" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-slate-100 text-slate-700 hover:bg-slate-200">
+          Chỉ Thiết Bị iOS (Apple)
+        </button>
+        <button onclick="setPlatform('android')" id="tab-android" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-slate-100 text-slate-700 hover:bg-slate-200">
+          Chỉ Thiết Bị Android
+        </button>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="relative w-full md:w-80">
+          <input type="text" id="search-input" oninput="handleSearch()" placeholder="Tìm kiếm tên máy, model, HĐH..." class="w-full pl-9 pr-4 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION: PRIMARY COLUMN CHARTS -->
+  <section class="max-w-7xl mx-auto mb-8">
+    <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-6 bg-blue-600 rounded-full"></span>
+            <h2 class="text-lg sm:text-xl font-bold text-slate-900" id="column-chart-title">Biểu Đồ Cột: Top Thiết Bị Theo Tên Thương Mại & Phiên Bản HĐH</h2>
+          </div>
+          <p class="text-xs text-slate-500 mt-1" id="column-chart-subtitle">Trực quan hóa số lượng người dùng theo từng dòng máy, kèm mã model và phiên bản hệ điều hành</p>
+        </div>
+
+        <!-- CHART MODE TOGGLE -->
+        <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-semibold" id="chart-mode-buttons">
+          <button onclick="setChartMode('devices')" id="btn-mode-devices" class="chart-btn active px-3 py-1.5 rounded-lg border border-transparent transition">
+            Top 15 Thiết bị
+          </button>
+          <button onclick="setChartMode('os')" id="btn-mode-os" class="chart-btn px-3 py-1.5 rounded-lg border border-transparent transition text-slate-600 hover:text-slate-900">
+            Phiên bản HĐH
+          </button>
+          <button onclick="setChartMode('monthly')" id="btn-mode-monthly" class="chart-btn px-3 py-1.5 rounded-lg border border-transparent transition text-slate-600 hover:text-slate-900">
+            So sánh iOS vs Android (T8-T11)
+          </button>
+        </div>
+      </div>
+
+      <!-- SVG COLUMN CHART CONTAINER -->
+      <div class="w-full overflow-x-auto custom-scroll pb-2">
+        <div class="min-w-[760px] lg:min-w-full" id="svg-chart-wrapper">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+
+      <!-- LEGEND / SUMMARY NOTES -->
+      <div class="flex flex-wrap items-center justify-between text-xs text-slate-500 mt-4 pt-4 border-t border-slate-100" id="chart-legend">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- SECONDARY CHARTS GRID -->
+  <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+
+    <!-- LEFT 2 COLS: TOP DEVICES BAR LIST -->
+    <div class="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900" id="chart-device-title">Chi Tiết Thứ Hạng Thiết Bị Theo Tên Thương Mại</h2>
+          <p class="text-xs text-slate-500">Danh sách xếp hạng kèm thanh đo tỷ trọng và phiên bản HĐH</p>
+        </div>
+        <span class="text-xs font-semibold px-2.5 py-1 bg-slate-100 rounded-lg text-slate-600" id="device-count-badge">Top 25 máy</span>
+      </div>
+
+      <!-- BARS CONTAINER -->
+      <div class="space-y-3 custom-scroll max-h-[580px] overflow-y-auto pr-2" id="device-bars-container">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+
+    <!-- RIGHT 1 COL: OS & BRAND BREAKDOWN -->
+    <div class="space-y-6">
+
+      <!-- OS MAJOR BREAKDOWN CARD -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+        <h2 class="text-base font-bold text-slate-900 mb-1">Cơ Cấu Phiên Bản Hệ Điều Hành</h2>
+        <p class="text-xs text-slate-500 mb-4">Phân bổ tỷ trọng người dùng theo bản HĐH chính</p>
+        
+        <div class="space-y-3" id="os-breakdown-list">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+
+      <!-- BRAND SHARE CARD -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+        <h2 class="text-base font-bold text-slate-900 mb-1">Thị Phần Hãng Sản Xuất</h2>
+        <p class="text-xs text-slate-500 mb-4">Tỷ trọng các thương hiệu trên toàn hệ thống GoFa</p>
+        
+        <div class="space-y-2.5" id="brand-share-list">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+
+      <!-- MONTHLY TREND -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+        <h2 class="text-base font-bold text-slate-900 mb-1">Xu Hướng Người Dùng Theo Tháng</h2>
+        <p class="text-xs text-slate-500 mb-3">Tháng 8/2026 – Tháng 11/2026 (1-6/11)</p>
+        
+        <div class="grid grid-cols-4 gap-2 text-center pt-1" id="monthly-trend-grid">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- DATA TABLE SECTION -->
+  <section class="max-w-7xl mx-auto mb-12">
+    <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Bảng Tra Cứu Toàn Bộ Thiết Bị</h2>
+          <p class="text-xs text-slate-500">Tên thương mại, mã model, phiên bản HĐH và số lượng người dùng</p>
+        </div>
+        <div class="text-xs text-slate-500" id="table-record-count">Đang tải...</div>
+      </div>
+
+      <div class="overflow-x-auto custom-scroll rounded-xl border border-slate-200">
+        <table class="w-full text-left text-xs sm:text-sm">
+          <thead class="bg-slate-100 text-slate-700 font-semibold uppercase text-[11px] tracking-wider border-b border-slate-200">
+            <tr>
+              <th class="py-3 px-3 text-center">STT</th>
+              <th class="py-3 px-3">Nền tảng</th>
+              <th class="py-3 px-3">Hãng</th>
+              <th class="py-3 px-4">Tên thiết bị (Tên thương mại)</th>
+              <th class="py-3 px-3">Model (Mã máy)</th>
+              <th class="py-3 px-3">Phiên bản HĐH chính</th>
+              <th class="py-3 px-3 text-right">Toàn kỳ</th>
+              <th class="py-3 px-3 text-right">% Nền tảng</th>
+              <th class="py-3 px-3 text-right">% Toàn kỳ</th>
+            </tr>
+          </thead>
+          <tbody id="table-body" class="divide-y divide-slate-100">
+            <!-- Rendered via JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flex items-center justify-between mt-4 text-xs text-slate-500">
+        <button onclick="prevPage()" id="btn-prev" class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 disabled:opacity-40 font-medium">Trang trước</button>
+        <span id="page-indicator" class="font-medium">Trang 1</span>
+        <button onclick="nextPage()" id="btn-next" class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 disabled:opacity-40 font-medium">Trang sau</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- DATA & LOGIC SCRIPT -->
+  <script>
+    const RAW_DATA = {
+  "overview": {
+    "total_users": 64951,
+    "android_users": 32543,
+    "ios_users": 32384,
+    "unknown_users": 24,
+    "monthly": {
+      "T8": {
+        "total": 32572,
+        "ios": 16868,
+        "android": 15689
+      },
+      "T9": {
+        "total": 27801,
+        "ios": 14055,
+        "android": 13733
+      },
+      "T10": {
+        "total": 32045,
+        "ios": 15591,
+        "android": 16445
+      },
+      "T11": {
+        "total": 12615,
+        "ios": 6128,
+        "android": 6483
+      }
+    },
+    "protocol": [
+      {
+        "name": "Mobile",
+        "users": 53905,
+        "pct": 82.99
+      },
+      {
+        "name": "CarPlay",
+        "users": 10939,
+        "pct": 16.84
+      },
+      {
+        "name": "Khác (3)",
+        "users": 83,
+        "pct": 0.13
+      },
+      {
+        "name": "(không rõ)",
+        "users": 24,
+        "pct": 0.04
+      }
+    ],
+    "os_major": [
+      {
+        "name": "iOS 26",
+        "platform": "iOS",
+        "users": 17853,
+        "pct_platform": 55.13,
+        "pct_total": 27.49,
+        "color": "#0078D4"
+      },
+      {
+        "name": "Android 16",
+        "platform": "Android",
+        "users": 12506,
+        "pct_platform": 38.43,
+        "pct_total": 19.25,
+        "color": "#2E7D32"
+      },
+      {
+        "name": "iOS 18",
+        "platform": "iOS",
+        "users": 6588,
+        "pct_platform": 20.34,
+        "pct_total": 10.14,
+        "color": "#2B88D8"
+      },
+      {
+        "name": "Android 13",
+        "platform": "Android",
+        "users": 4630,
+        "pct_platform": 14.23,
+        "pct_total": 7.13,
+        "color": "#388E3C"
+      },
+      {
+        "name": "Android 15",
+        "platform": "Android",
+        "users": 4089,
+        "pct_platform": 12.56,
+        "pct_total": 6.3,
+        "color": "#43A047"
+      },
+      {
+        "name": "iOS 27",
+        "platform": "iOS",
+        "users": 3776,
+        "pct_platform": 11.66,
+        "pct_total": 5.81,
+        "color": "#50E6FF"
+      },
+      {
+        "name": "Android 14",
+        "platform": "Android",
+        "users": 3273,
+        "pct_platform": 10.06,
+        "pct_total": 5.04,
+        "color": "#4CAF50"
+      },
+      {
+        "name": "Android 10",
+        "platform": "Android",
+        "users": 2778,
+        "pct_platform": 8.54,
+        "pct_total": 4.28,
+        "color": "#66BB6A"
+      },
+      {
+        "name": "Android 12",
+        "platform": "Android",
+        "users": 2176,
+        "pct_platform": 6.69,
+        "pct_total": 3.35,
+        "color": "#81C784"
+      },
+      {
+        "name": "iOS 16",
+        "platform": "iOS",
+        "users": 1695,
+        "pct_platform": 5.23,
+        "pct_total": 2.61,
+        "color": "#71AFE5"
+      },
+      {
+        "name": "iOS 17",
+        "platform": "iOS",
+        "users": 1435,
+        "pct_platform": 4.43,
+        "pct_total": 2.21,
+        "color": "#9BC3E6"
+      },
+      {
+        "name": "Android 17",
+        "platform": "Android",
+        "users": 1208,
+        "pct_platform": 3.71,
+        "pct_total": 1.86,
+        "color": "#A5D6A7"
+      },
+      {
+        "name": "Android 11",
+        "platform": "Android",
+        "users": 1086,
+        "pct_platform": 3.34,
+        "pct_total": 1.67,
+        "color": "#C8E6C9"
+      },
+      {
+        "name": "iOS 15",
+        "platform": "iOS",
+        "users": 1029,
+        "pct_platform": 3.18,
+        "pct_total": 1.58,
+        "color": "#C7E0F4"
+      },
+      {
+        "name": "Android 9",
+        "platform": "Android",
+        "users": 519,
+        "pct_platform": 1.59,
+        "pct_total": 0.8,
+        "color": "#E8F5E9"
+      },
+      {
+        "name": "Android 8",
+        "platform": "Android",
+        "users": 212,
+        "pct_platform": 0.65,
+        "pct_total": 0.33,
+        "color": "#E8F5E9"
+      },
+      {
+        "name": "Android 6/7",
+        "platform": "Android",
+        "users": 66,
+        "pct_platform": 0.2,
+        "pct_total": 0.1,
+        "color": "#E8F5E9"
+      },
+      {
+        "name": "iOS 14",
+        "platform": "iOS",
+        "users": 8,
+        "pct_platform": 0.02,
+        "pct_total": 0.01,
+        "color": "#E1DFDD"
+      }
+    ],
+    "brand_share": [
+      {
+        "brand": "Apple",
+        "platform": "iOS",
+        "users": 32384,
+        "pct": 49.86,
+        "color": "#0078D4"
+      },
+      {
+        "brand": "Samsung",
+        "platform": "Android",
+        "users": 11990,
+        "pct": 18.46,
+        "color": "#1428A0"
+      },
+      {
+        "brand": "Xiaomi",
+        "platform": "Android",
+        "users": 6127,
+        "pct": 9.43,
+        "color": "#FF6900"
+      },
+      {
+        "brand": "OPPO",
+        "platform": "Android",
+        "users": 4537,
+        "pct": 6.99,
+        "color": "#0F7E3B"
+      },
+      {
+        "brand": "Màn hình Ô tô / Box",
+        "platform": "Android",
+        "users": 4227,
+        "pct": 6.51,
+        "color": "#F2994A"
+      },
+      {
+        "brand": "Vivo",
+        "platform": "Android",
+        "users": 1544,
+        "pct": 2.38,
+        "color": "#415FFF"
+      },
+      {
+        "brand": "Honor",
+        "platform": "Android",
+        "users": 790,
+        "pct": 1.22,
+        "color": "#00A4E4"
+      },
+      {
+        "brand": "Realme",
+        "platform": "Android",
+        "users": 721,
+        "pct": 1.11,
+        "color": "#FFC915"
+      },
+      {
+        "brand": "Khác",
+        "platform": "Android",
+        "users": 618,
+        "pct": 0.95,
+        "color": "#828282"
+      },
+      {
+        "brand": "Google",
+        "platform": "Android",
+        "users": 282,
+        "pct": 0.43,
+        "color": "#4285F4"
+      },
+      {
+        "brand": "ZTE",
+        "platform": "Android",
+        "users": 296,
+        "pct": 0.46,
+        "color": "#005596"
+      },
+      {
+        "brand": "Tecno",
+        "platform": "Android",
+        "users": 282,
+        "pct": 0.43,
+        "color": "#0080FF"
+      },
+      {
+        "brand": "OnePlus",
+        "platform": "Android",
+        "users": 224,
+        "pct": 0.34,
+        "color": "#EB0029"
+      },
+      {
+        "brand": "Doro",
+        "platform": "Android",
+        "users": 155,
+        "pct": 0.24,
+        "color": "#6FCF97"
+      },
+      {
+        "brand": "Khác còn lại",
+        "platform": "Cả hai",
+        "users": 69,
+        "pct": 0.11,
+        "color": "#BDBDBD"
+      }
+    ]
+  },
+  "top_combined": [
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 12 Pro Max",
+      "model": "iPhone13,4 (A2342 / A2411)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 14 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 2327,
+      "t9": 1911,
+      "t10": 2209,
+      "t11": 887,
+      "total": 4488,
+      "pct_platform": "13.86%",
+      "pct_total": "6.91%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 14 Pro Max",
+      "model": "iPhone15,3 (A2651 / A2894)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 16 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 2010,
+      "t9": 1678,
+      "t10": 1853,
+      "t11": 701,
+      "total": 3870,
+      "pct_platform": "11.95%",
+      "pct_total": "5.96%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 15 Pro Max",
+      "model": "iPhone16,2 (A2849 / A3106)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 17 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 1480,
+      "t9": 1255,
+      "t10": 1358,
+      "t11": 496,
+      "total": 2838,
+      "pct_platform": "8.76%",
+      "pct_total": "4.37%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 16 Pro Max",
+      "model": "iPhone17,2 (A3084 / A3296)",
+      "main_os": "iOS 26 / iOS 27",
+      "all_os": "iOS 18 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 1220,
+      "t9": 993,
+      "t10": 1000,
+      "t11": 371,
+      "total": 2216,
+      "pct_platform": "6.84%",
+      "pct_total": "3.41%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 13 Pro Max",
+      "model": "iPhone14,3 (A2484 / A2643)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 15 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 1052,
+      "t9": 838,
+      "t10": 923,
+      "t11": 356,
+      "total": 1960,
+      "pct_platform": "6.05%",
+      "pct_total": "3.02%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 11 Pro Max",
+      "model": "iPhone12,5 (A2161 / A2218)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 14 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 1012,
+      "t9": 835,
+      "t10": 953,
+      "t11": 366,
+      "total": 1945,
+      "pct_platform": "6.01%",
+      "pct_total": "2.99%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 17 Pro Max",
+      "model": "iPhone18,2",
+      "main_os": "iOS 26 / iOS 27",
+      "all_os": "iOS 26 – iOS 27",
+      "t8": 776,
+      "t9": 705,
+      "t10": 736,
+      "t11": 303,
+      "total": 1590,
+      "pct_platform": "4.91%",
+      "pct_total": "2.45%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 11",
+      "model": "iPhone12,1 (A2111 / A2221)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 14 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 819,
+      "t9": 610,
+      "t10": 671,
+      "t11": 267,
+      "total": 1441,
+      "pct_platform": "4.45%",
+      "pct_total": "2.22%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Màn hình Android Ô tô / Box",
+      "name": "Màn hình Ô tô / Box (ums512_1h10_Natv)",
+      "model": "ums512_1h10_Natv",
+      "main_os": "Android 10",
+      "all_os": "Android 10; Android 13; Android 12; Android 11; Android 9; Android 8.1",
+      "t8": 696,
+      "t9": 556,
+      "t10": 593,
+      "t11": 287,
+      "total": 1236,
+      "pct_platform": "3.80%",
+      "pct_total": "1.90%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone XS Max",
+      "model": "iPhone11,4 / iPhone11,6 (A1921 / A2101)",
+      "main_os": "iOS 18",
+      "all_os": "iOS 14 – iOS 18 (tối đa iOS 18.x)",
+      "t8": 591,
+      "t9": 509,
+      "t10": 567,
+      "t11": 234,
+      "total": 1173,
+      "pct_platform": "3.62%",
+      "pct_total": "1.81%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Màn hình Android Ô tô / Box",
+      "name": "Màn hình Ô tô / Box (uis8581a2h10_Automotive)",
+      "model": "uis8581a2h10_Automotive",
+      "main_os": "Android 10",
+      "all_os": "Android 10; Android 13; Android 12; Android 11; Android 9; Android 8.1",
+      "t8": 582,
+      "t9": 527,
+      "t10": 566,
+      "t11": 270,
+      "total": 1152,
+      "pct_platform": "3.54%",
+      "pct_total": "1.77%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 13",
+      "model": "iPhone14,5 (A2482 / A2633)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 15 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 553,
+      "t9": 454,
+      "t10": 477,
+      "t11": 214,
+      "total": 1038,
+      "pct_platform": "3.21%",
+      "pct_total": "1.60%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 12 Pro",
+      "model": "iPhone13,3 (A2341 / A2407)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 14 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 532,
+      "t9": 428,
+      "t10": 507,
+      "t11": 205,
+      "total": 1018,
+      "pct_platform": "3.14%",
+      "pct_total": "1.57%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 14 Pro",
+      "model": "iPhone15,2 (A2650 / A2890)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 16 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 476,
+      "t9": 435,
+      "t10": 435,
+      "t11": 171,
+      "total": 928,
+      "pct_platform": "2.87%",
+      "pct_total": "1.43%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 12",
+      "model": "iPhone13,2 (A2172 / A2403)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 14 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 382,
+      "t9": 306,
+      "t10": 329,
+      "t11": 133,
+      "total": 706,
+      "pct_platform": "2.18%",
+      "pct_total": "1.09%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Màn hình Android Ô tô / Box",
+      "name": "Màn hình Ô tô / Box (Bengal for arm64)",
+      "model": "Bengal for arm64",
+      "main_os": "Android 10",
+      "all_os": "Android 10; Android 13; Android 12; Android 11; Android 9; Android 8.1",
+      "t8": 314,
+      "t9": 360,
+      "t10": 388,
+      "t11": 214,
+      "total": 694,
+      "pct_platform": "2.13%",
+      "pct_total": "1.07%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 15 Pro",
+      "model": "iPhone16,1 (A2848 / A3102)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 17 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 292,
+      "t9": 237,
+      "t10": 249,
+      "t11": 95,
+      "total": 532,
+      "pct_platform": "1.64%",
+      "pct_total": "0.82%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy S24 Ultra",
+      "model": "SM-S928B",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 17; Android 15; Android 14",
+      "t8": 230,
+      "t9": 202,
+      "t10": 245,
+      "t11": 95,
+      "total": 479,
+      "pct_platform": "1.47%",
+      "pct_total": "0.74%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy S25 Ultra",
+      "model": "SM-S938B",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 17; Android 15",
+      "t8": 216,
+      "t9": 212,
+      "t10": 253,
+      "t11": 76,
+      "total": 468,
+      "pct_platform": "1.44%",
+      "pct_total": "0.72%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 14 Plus",
+      "model": "iPhone14,8 (A2632 / A2886)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 16 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 223,
+      "t9": 212,
+      "t10": 241,
+      "t11": 95,
+      "total": 460,
+      "pct_platform": "1.42%",
+      "pct_total": "0.71%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 8 Plus",
+      "model": "iPhone10,2 / iPhone10,5 (A1864 / A1897)",
+      "main_os": "iOS 16",
+      "all_os": "iOS 14 – iOS 16 (tối đa iOS 16.7.16)",
+      "t8": 225,
+      "t9": 176,
+      "t10": 234,
+      "t11": 87,
+      "total": 458,
+      "pct_platform": "1.41%",
+      "pct_total": "0.71%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 16 Pro",
+      "model": "iPhone17,1 (A3083 / A3293)",
+      "main_os": "iOS 26 / iOS 27",
+      "all_os": "iOS 18 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 232,
+      "t9": 193,
+      "t10": 227,
+      "t11": 82,
+      "total": 455,
+      "pct_platform": "1.41%",
+      "pct_total": "0.70%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 15 Plus",
+      "model": "iPhone15,5 (A2847 / A3094)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 17 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 237,
+      "t9": 200,
+      "t10": 223,
+      "t11": 96,
+      "total": 446,
+      "pct_platform": "1.38%",
+      "pct_total": "0.69%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 15",
+      "model": "iPhone15,4 (A2846 / A3090)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 17 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 231,
+      "t9": 194,
+      "t10": 201,
+      "t11": 79,
+      "total": 440,
+      "pct_platform": "1.36%",
+      "pct_total": "0.68%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A56",
+      "model": "SM-A566B",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 17; Android 15",
+      "t8": 206,
+      "t9": 175,
+      "t10": 223,
+      "t11": 92,
+      "total": 414,
+      "pct_platform": "1.27%",
+      "pct_total": "0.64%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone XS",
+      "model": "iPhone11,2 (A1920 / A2097)",
+      "main_os": "iOS 18",
+      "all_os": "iOS 14 – iOS 18 (tối đa iOS 18.x)",
+      "t8": 200,
+      "t9": 172,
+      "t10": 215,
+      "t11": 80,
+      "total": 400,
+      "pct_platform": "1.24%",
+      "pct_total": "0.62%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 11 Pro",
+      "model": "iPhone12,3 (A2160 / A2215)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 14 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 229,
+      "t9": 173,
+      "t10": 193,
+      "t11": 76,
+      "total": 399,
+      "pct_platform": "1.23%",
+      "pct_total": "0.61%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 13 Pro",
+      "model": "iPhone14,2 (A2483 / A2638)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 15 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 210,
+      "t9": 180,
+      "t10": 174,
+      "t11": 81,
+      "total": 390,
+      "pct_platform": "1.20%",
+      "pct_total": "0.60%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi Redmi Note 14 4G",
+      "model": "24117RN76O",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 15",
+      "t8": 153,
+      "t9": 131,
+      "t10": 209,
+      "t11": 73,
+      "total": 364,
+      "pct_platform": "1.12%",
+      "pct_total": "0.56%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy S23 Ultra",
+      "model": "SM-S918B",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 17; Android 15; Android 13",
+      "t8": 183,
+      "t9": 150,
+      "t10": 152,
+      "t11": 59,
+      "total": 349,
+      "pct_platform": "1.07%",
+      "pct_total": "0.54%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A55",
+      "model": "SM-A556E",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 15; Android 17",
+      "t8": 173,
+      "t9": 138,
+      "t10": 156,
+      "t11": 67,
+      "total": 330,
+      "pct_platform": "1.01%",
+      "pct_total": "0.51%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi Redmi Note 13 4G",
+      "model": "23129RAA4G",
+      "main_os": "Android 15",
+      "all_os": "Android 15; Android 14; Android 13",
+      "t8": 174,
+      "t9": 137,
+      "t10": 160,
+      "t11": 61,
+      "total": 328,
+      "pct_platform": "1.01%",
+      "pct_total": "0.50%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 14",
+      "model": "iPhone14,7 (A2649 / A2882)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 16 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 165,
+      "t9": 126,
+      "t10": 158,
+      "t11": 69,
+      "total": 321,
+      "pct_platform": "0.99%",
+      "pct_total": "0.49%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 7 Plus",
+      "model": "iPhone9,2 / iPhone9,4 (A1661 / A1784)",
+      "main_os": "iOS 15",
+      "all_os": "iOS 14 – iOS 15 (tối đa iOS 15.8.8)",
+      "t8": 147,
+      "t9": 120,
+      "t10": 152,
+      "t11": 53,
+      "total": 317,
+      "pct_platform": "0.98%",
+      "pct_total": "0.49%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone X",
+      "model": "iPhone10,3 / iPhone10,6 (A1865 / A1901)",
+      "main_os": "iOS 16",
+      "all_os": "iOS 14 – iOS 16 (tối đa iOS 16.7.16)",
+      "t8": 141,
+      "t9": 127,
+      "t10": 140,
+      "t11": 56,
+      "total": 297,
+      "pct_platform": "0.92%",
+      "pct_total": "0.46%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A15",
+      "model": "SM-A155F",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 15",
+      "t8": 138,
+      "t9": 130,
+      "t10": 159,
+      "t11": 63,
+      "total": 279,
+      "pct_platform": "0.86%",
+      "pct_total": "0.43%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy S22 Ultra",
+      "model": "SM-S908E",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 15; Android 13; Android 9; Android 11; Android 12",
+      "t8": 153,
+      "t9": 139,
+      "t10": 136,
+      "t11": 51,
+      "total": 274,
+      "pct_platform": "0.84%",
+      "pct_total": "0.42%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 7",
+      "model": "iPhone9,1 / iPhone9,3 (A1660 / A1778)",
+      "main_os": "iOS 15",
+      "all_os": "iOS 14 – iOS 15 (tối đa iOS 15.8.8)",
+      "t8": 133,
+      "t9": 128,
+      "t10": 137,
+      "t11": 63,
+      "total": 270,
+      "pct_platform": "0.83%",
+      "pct_total": "0.42%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Màn hình Android Ô tô / Box",
+      "name": "Màn hình Ô tô / Box (s9863a1h10_Natv)",
+      "model": "s9863a1h10_Natv",
+      "main_os": "Android 10",
+      "all_os": "Android 10; Android 13; Android 12; Android 11; Android 9; Android 8.1",
+      "t8": 136,
+      "t9": 99,
+      "t10": 114,
+      "t11": 52,
+      "total": 246,
+      "pct_platform": "0.76%",
+      "pct_total": "0.38%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 17 Pro",
+      "model": "iPhone18,1",
+      "main_os": "iOS 26 / iOS 27",
+      "all_os": "iOS 26 – iOS 27",
+      "t8": 127,
+      "t9": 112,
+      "t10": 102,
+      "t11": 44,
+      "total": 232,
+      "pct_platform": "0.72%",
+      "pct_total": "0.36%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi Redmi Note 13 Pro",
+      "model": "2312DRA50G",
+      "main_os": "Android 14",
+      "all_os": "Android 14; Android 16; Android 15; Android 13",
+      "t8": 104,
+      "t9": 86,
+      "t10": 120,
+      "t11": 52,
+      "total": 229,
+      "pct_platform": "0.70%",
+      "pct_total": "0.35%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone XR",
+      "model": "iPhone11,8 (A1984 / A2105)",
+      "main_os": "iOS 18",
+      "all_os": "iOS 14 – iOS 18 (tối đa iOS 18.x)",
+      "t8": 118,
+      "t9": 106,
+      "t10": 104,
+      "t11": 32,
+      "total": 219,
+      "pct_platform": "0.68%",
+      "pct_total": "0.34%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy S26 Ultra",
+      "model": "SM-S948B",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 17",
+      "t8": 81,
+      "t9": 99,
+      "t10": 103,
+      "t11": 33,
+      "total": 208,
+      "pct_platform": "0.64%",
+      "pct_total": "0.32%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 17",
+      "model": "iPhone18,3",
+      "main_os": "iOS 26 / iOS 27",
+      "all_os": "iOS 26 – iOS 27",
+      "t8": 108,
+      "t9": 102,
+      "t10": 103,
+      "t11": 31,
+      "total": 208,
+      "pct_platform": "0.64%",
+      "pct_total": "0.32%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 8",
+      "model": "iPhone10,1 / iPhone10,4 (A1863 / A1905)",
+      "main_os": "iOS 16",
+      "all_os": "iOS 14 – iOS 16 (tối đa iOS 16.7.16)",
+      "t8": 85,
+      "t9": 92,
+      "t10": 119,
+      "t11": 69,
+      "total": 205,
+      "pct_platform": "0.63%",
+      "pct_total": "0.32%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A73 5G",
+      "model": "SM-A736B",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 15; Android 12; Android 13",
+      "t8": 106,
+      "t9": 82,
+      "t10": 83,
+      "t11": 31,
+      "total": 188,
+      "pct_platform": "0.58%",
+      "pct_total": "0.29%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy S20 FE 5G",
+      "model": "SM-G780G",
+      "main_os": "Android 13",
+      "all_os": "Android 13; Android 12; Android 11",
+      "t8": 100,
+      "t9": 79,
+      "t10": 89,
+      "t11": 37,
+      "total": 182,
+      "pct_platform": "0.56%",
+      "pct_total": "0.28%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A23",
+      "model": "SM-A235F",
+      "main_os": "Android 14",
+      "all_os": "Android 14; Android 13; Android 12",
+      "t8": 107,
+      "t9": 70,
+      "t10": 83,
+      "t11": 35,
+      "total": 178,
+      "pct_platform": "0.55%",
+      "pct_total": "0.27%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi Redmi Note 11",
+      "model": "2201117TG",
+      "main_os": "Android 13",
+      "all_os": "Android 13; Android 11; Android 12; Android 16",
+      "t8": 95,
+      "t9": 74,
+      "t10": 87,
+      "t11": 36,
+      "total": 174,
+      "pct_platform": "0.53%",
+      "pct_total": "0.27%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A34",
+      "model": "SM-A346E",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15; Android 13",
+      "t8": 96,
+      "t9": 71,
+      "t10": 84,
+      "t11": 32,
+      "total": 168,
+      "pct_platform": "0.52%",
+      "pct_total": "0.26%"
+    }
+  ],
+  "top_ios": [
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 12 Pro Max",
+      "model": "iPhone13,4 (A2342 / A2411)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 14 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 2327,
+      "t9": 1911,
+      "t10": 2209,
+      "t11": 887,
+      "total": 4488,
+      "pct_platform": "13.86%",
+      "pct_total": "6.91%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 14 Pro Max",
+      "model": "iPhone15,3 (A2651 / A2894)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 16 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 2010,
+      "t9": 1678,
+      "t10": 1853,
+      "t11": 701,
+      "total": 3870,
+      "pct_platform": "11.95%",
+      "pct_total": "5.96%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 15 Pro Max",
+      "model": "iPhone16,2 (A2849 / A3106)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 17 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 1480,
+      "t9": 1255,
+      "t10": 1358,
+      "t11": 496,
+      "total": 2838,
+      "pct_platform": "8.76%",
+      "pct_total": "4.37%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 16 Pro Max",
+      "model": "iPhone17,2 (A3084 / A3296)",
+      "main_os": "iOS 26 / iOS 27",
+      "all_os": "iOS 18 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 1220,
+      "t9": 993,
+      "t10": 1000,
+      "t11": 371,
+      "total": 2216,
+      "pct_platform": "6.84%",
+      "pct_total": "3.41%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 13 Pro Max",
+      "model": "iPhone14,3 (A2484 / A2643)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 15 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 1052,
+      "t9": 838,
+      "t10": 923,
+      "t11": 356,
+      "total": 1960,
+      "pct_platform": "6.05%",
+      "pct_total": "3.02%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 11 Pro Max",
+      "model": "iPhone12,5 (A2161 / A2218)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 14 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 1012,
+      "t9": 835,
+      "t10": 953,
+      "t11": 366,
+      "total": 1945,
+      "pct_platform": "6.01%",
+      "pct_total": "2.99%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 17 Pro Max",
+      "model": "iPhone18,2",
+      "main_os": "iOS 26 / iOS 27",
+      "all_os": "iOS 26 – iOS 27",
+      "t8": 776,
+      "t9": 705,
+      "t10": 736,
+      "t11": 303,
+      "total": 1590,
+      "pct_platform": "4.91%",
+      "pct_total": "2.45%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 11",
+      "model": "iPhone12,1 (A2111 / A2221)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 14 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 819,
+      "t9": 610,
+      "t10": 671,
+      "t11": 267,
+      "total": 1441,
+      "pct_platform": "4.45%",
+      "pct_total": "2.22%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone XS Max",
+      "model": "iPhone11,4 / iPhone11,6 (A1921 / A2101)",
+      "main_os": "iOS 18",
+      "all_os": "iOS 14 – iOS 18 (tối đa iOS 18.x)",
+      "t8": 591,
+      "t9": 509,
+      "t10": 567,
+      "t11": 234,
+      "total": 1173,
+      "pct_platform": "3.62%",
+      "pct_total": "1.81%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 13",
+      "model": "iPhone14,5 (A2482 / A2633)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 15 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 553,
+      "t9": 454,
+      "t10": 477,
+      "t11": 214,
+      "total": 1038,
+      "pct_platform": "3.21%",
+      "pct_total": "1.60%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 12 Pro",
+      "model": "iPhone13,3 (A2341 / A2407)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 14 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 532,
+      "t9": 428,
+      "t10": 507,
+      "t11": 205,
+      "total": 1018,
+      "pct_platform": "3.14%",
+      "pct_total": "1.57%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 14 Pro",
+      "model": "iPhone15,2 (A2650 / A2890)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 16 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 476,
+      "t9": 435,
+      "t10": 435,
+      "t11": 171,
+      "total": 928,
+      "pct_platform": "2.87%",
+      "pct_total": "1.43%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 12",
+      "model": "iPhone13,2 (A2172 / A2403)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 14 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 382,
+      "t9": 306,
+      "t10": 329,
+      "t11": 133,
+      "total": 706,
+      "pct_platform": "2.18%",
+      "pct_total": "1.09%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 15 Pro",
+      "model": "iPhone16,1 (A2848 / A3102)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 17 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 292,
+      "t9": 237,
+      "t10": 249,
+      "t11": 95,
+      "total": 532,
+      "pct_platform": "1.64%",
+      "pct_total": "0.82%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 14 Plus",
+      "model": "iPhone14,8 (A2632 / A2886)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 16 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 223,
+      "t9": 212,
+      "t10": 241,
+      "t11": 95,
+      "total": 460,
+      "pct_platform": "1.42%",
+      "pct_total": "0.71%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 8 Plus",
+      "model": "iPhone10,2 / iPhone10,5 (A1864 / A1897)",
+      "main_os": "iOS 16",
+      "all_os": "iOS 14 – iOS 16 (tối đa iOS 16.7.16)",
+      "t8": 225,
+      "t9": 176,
+      "t10": 234,
+      "t11": 87,
+      "total": 458,
+      "pct_platform": "1.41%",
+      "pct_total": "0.71%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 16 Pro",
+      "model": "iPhone17,1 (A3083 / A3293)",
+      "main_os": "iOS 26 / iOS 27",
+      "all_os": "iOS 18 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 232,
+      "t9": 193,
+      "t10": 227,
+      "t11": 82,
+      "total": 455,
+      "pct_platform": "1.41%",
+      "pct_total": "0.70%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 15 Plus",
+      "model": "iPhone15,5 (A2847 / A3094)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 17 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 237,
+      "t9": 200,
+      "t10": 223,
+      "t11": 96,
+      "total": 446,
+      "pct_platform": "1.38%",
+      "pct_total": "0.69%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 15",
+      "model": "iPhone15,4 (A2846 / A3090)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 17 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 231,
+      "t9": 194,
+      "t10": 201,
+      "t11": 79,
+      "total": 440,
+      "pct_platform": "1.36%",
+      "pct_total": "0.68%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone XS",
+      "model": "iPhone11,2 (A1920 / A2097)",
+      "main_os": "iOS 18",
+      "all_os": "iOS 14 – iOS 18 (tối đa iOS 18.x)",
+      "t8": 200,
+      "t9": 172,
+      "t10": 215,
+      "t11": 80,
+      "total": 400,
+      "pct_platform": "1.24%",
+      "pct_total": "0.62%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 11 Pro",
+      "model": "iPhone12,3 (A2160 / A2215)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 14 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 229,
+      "t9": 173,
+      "t10": 193,
+      "t11": 76,
+      "total": 399,
+      "pct_platform": "1.23%",
+      "pct_total": "0.61%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 13 Pro",
+      "model": "iPhone14,2 (A2483 / A2638)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 15 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 210,
+      "t9": 180,
+      "t10": 174,
+      "t11": 81,
+      "total": 390,
+      "pct_platform": "1.20%",
+      "pct_total": "0.60%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 14",
+      "model": "iPhone14,7 (A2649 / A2882)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 16 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 165,
+      "t9": 126,
+      "t10": 158,
+      "t11": 69,
+      "total": 321,
+      "pct_platform": "0.99%",
+      "pct_total": "0.49%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 7 Plus",
+      "model": "iPhone9,2 / iPhone9,4 (A1661 / A1784)",
+      "main_os": "iOS 15",
+      "all_os": "iOS 14 – iOS 15 (tối đa iOS 15.8.8)",
+      "t8": 147,
+      "t9": 120,
+      "t10": 152,
+      "t11": 53,
+      "total": 317,
+      "pct_platform": "0.98%",
+      "pct_total": "0.49%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone X",
+      "model": "iPhone10,3 / iPhone10,6 (A1865 / A1901)",
+      "main_os": "iOS 16",
+      "all_os": "iOS 14 – iOS 16 (tối đa iOS 16.7.16)",
+      "t8": 141,
+      "t9": 127,
+      "t10": 140,
+      "t11": 56,
+      "total": 297,
+      "pct_platform": "0.92%",
+      "pct_total": "0.46%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 7",
+      "model": "iPhone9,1 / iPhone9,3 (A1660 / A1778)",
+      "main_os": "iOS 15",
+      "all_os": "iOS 14 – iOS 15 (tối đa iOS 15.8.8)",
+      "t8": 133,
+      "t9": 128,
+      "t10": 137,
+      "t11": 63,
+      "total": 270,
+      "pct_platform": "0.83%",
+      "pct_total": "0.42%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 17 Pro",
+      "model": "iPhone18,1",
+      "main_os": "iOS 26 / iOS 27",
+      "all_os": "iOS 26 – iOS 27",
+      "t8": 127,
+      "t9": 112,
+      "t10": 102,
+      "t11": 44,
+      "total": 232,
+      "pct_platform": "0.72%",
+      "pct_total": "0.36%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone XR",
+      "model": "iPhone11,8 (A1984 / A2105)",
+      "main_os": "iOS 18",
+      "all_os": "iOS 14 – iOS 18 (tối đa iOS 18.x)",
+      "t8": 118,
+      "t9": 106,
+      "t10": 104,
+      "t11": 32,
+      "total": 219,
+      "pct_platform": "0.68%",
+      "pct_total": "0.34%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 17",
+      "model": "iPhone18,3",
+      "main_os": "iOS 26 / iOS 27",
+      "all_os": "iOS 26 – iOS 27",
+      "t8": 108,
+      "t9": 102,
+      "t10": 103,
+      "t11": 31,
+      "total": 208,
+      "pct_platform": "0.64%",
+      "pct_total": "0.32%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 8",
+      "model": "iPhone10,1 / iPhone10,4 (A1863 / A1905)",
+      "main_os": "iOS 16",
+      "all_os": "iOS 14 – iOS 16 (tối đa iOS 16.7.16)",
+      "t8": 85,
+      "t9": 92,
+      "t10": 119,
+      "t11": 69,
+      "total": 205,
+      "pct_platform": "0.63%",
+      "pct_total": "0.32%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 16",
+      "model": "iPhone17,3 (A3081 / A3287)",
+      "main_os": "iOS 26 / iOS 27",
+      "all_os": "iOS 18 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 79,
+      "t9": 64,
+      "t10": 67,
+      "t11": 25,
+      "total": 146,
+      "pct_platform": "0.45%",
+      "pct_total": "0.22%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 16 Plus",
+      "model": "iPhone17,4 (A3082 / A3290)",
+      "main_os": "iOS 26 / iOS 27",
+      "all_os": "iOS 18 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 81,
+      "t9": 67,
+      "t10": 67,
+      "t11": 10,
+      "total": 145,
+      "pct_platform": "0.45%",
+      "pct_total": "0.22%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 17 Air (iPhone Air)",
+      "model": "iPhone18,4",
+      "main_os": "iOS 26 / iOS 27",
+      "all_os": "iOS 26 – iOS 27",
+      "t8": 74,
+      "t9": 54,
+      "t10": 65,
+      "t11": 24,
+      "total": 124,
+      "pct_platform": "0.38%",
+      "pct_total": "0.19%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 18 series (Mã iPhone19,7)",
+      "model": "iPhone19,7",
+      "main_os": "iOS 27",
+      "all_os": "iOS 27 (27.0 – 27.3)",
+      "t8": 0,
+      "t9": 8,
+      "t10": 106,
+      "t11": 51,
+      "total": 123,
+      "pct_platform": "0.38%",
+      "pct_total": "0.19%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 6s",
+      "model": "iPhone8,1 (A1633 / A1688)",
+      "main_os": "iOS 15",
+      "all_os": "iOS 14 – iOS 15 (tối đa iOS 15.8.8)",
+      "t8": 50,
+      "t9": 48,
+      "t10": 59,
+      "t11": 32,
+      "total": 95,
+      "pct_platform": "0.29%",
+      "pct_total": "0.15%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 12 mini",
+      "model": "iPhone13,1 (A2176 / A2399)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 14 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 51,
+      "t9": 42,
+      "t10": 45,
+      "t11": 15,
+      "total": 94,
+      "pct_platform": "0.29%",
+      "pct_total": "0.14%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone SE (Thế hệ 2 - 2020)",
+      "model": "iPhone12,8 (A2275 / A2296)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 14 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 43,
+      "t9": 39,
+      "t10": 54,
+      "t11": 24,
+      "total": 91,
+      "pct_platform": "0.28%",
+      "pct_total": "0.14%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 6s Plus",
+      "model": "iPhone8,2 (A1634 / A1687)",
+      "main_os": "iOS 15",
+      "all_os": "iOS 14 – iOS 15 (tối đa iOS 15.8.8)",
+      "t8": 45,
+      "t9": 28,
+      "t10": 31,
+      "t11": 6,
+      "total": 72,
+      "pct_platform": "0.22%",
+      "pct_total": "0.11%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 13 mini",
+      "model": "iPhone14,4 (A2481 / A2628)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 15 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 28,
+      "t9": 26,
+      "t10": 33,
+      "t11": 12,
+      "total": 66,
+      "pct_platform": "0.20%",
+      "pct_total": "0.10%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 16e",
+      "model": "iPhone17,5 (A3212 / A3409)",
+      "main_os": "iOS 26 / iOS 27",
+      "all_os": "iOS 18.3 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 36,
+      "t9": 30,
+      "t10": 24,
+      "t11": 13,
+      "total": 63,
+      "pct_platform": "0.19%",
+      "pct_total": "0.10%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 17e / Dòng iPhone18,5",
+      "model": "iPhone18,5",
+      "main_os": "iOS 26 / iOS 27",
+      "all_os": "iOS 26 – iOS 27",
+      "t8": 11,
+      "t9": 17,
+      "t10": 10,
+      "t11": 7,
+      "total": 27,
+      "pct_platform": "0.08%",
+      "pct_total": "0.04%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone SE (Thế hệ 3 - 2022)",
+      "model": "iPhone14,6 (A2595 / A2783)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 15.4 – iOS 27 (phổ biến: iOS 18, iOS 26, iOS 27)",
+      "t8": 15,
+      "t9": 8,
+      "t10": 12,
+      "t11": 4,
+      "total": 22,
+      "pct_platform": "0.07%",
+      "pct_total": "0.03%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 18 Pro Max (Mã iPhone19,2)",
+      "model": "iPhone19,2",
+      "main_os": "iOS 27",
+      "all_os": "iOS 27 (27.0 – 27.3)",
+      "t8": 0,
+      "t9": 5,
+      "t10": 12,
+      "t11": 4,
+      "total": 13,
+      "pct_platform": "0.04%",
+      "pct_total": "0.02%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone SE (Thế hệ 1 - 2016)",
+      "model": "iPhone8,4 (A1662 / A1723)",
+      "main_os": "iOS 15",
+      "all_os": "iOS 14 – iOS 15 (tối đa iOS 15.8.8)",
+      "t8": 7,
+      "t9": 3,
+      "t10": 3,
+      "t11": 1,
+      "total": 9,
+      "pct_platform": "0.03%",
+      "pct_total": "0.01%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 18 (Mã iPhone19,3)",
+      "model": "iPhone19,3",
+      "main_os": "iOS 27",
+      "all_os": "iOS 27 (27.0 – 27.3)",
+      "t8": 0,
+      "t9": 0,
+      "t10": 4,
+      "t11": 3,
+      "total": 6,
+      "pct_platform": "0.02%",
+      "pct_total": "0.01%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 18 Plus / Air (Mã iPhone19,4)",
+      "model": "iPhone19,4",
+      "main_os": "iOS 27",
+      "all_os": "iOS 27 (27.0 – 27.3)",
+      "t8": 0,
+      "t9": 0,
+      "t10": 4,
+      "t11": 2,
+      "total": 4,
+      "pct_platform": "0.01%",
+      "pct_total": "0.01%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPad Air 2",
+      "model": "iPad5,3 / iPad5,4 (A1566 / A1567)",
+      "main_os": "iPadOS 15",
+      "all_os": "iPadOS 14 – iPadOS 15 (tối đa 15.8.x)",
+      "t8": 2,
+      "t9": 1,
+      "t10": 1,
+      "t11": 0,
+      "total": 3,
+      "pct_platform": "0.01%",
+      "pct_total": "0.00%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPad Gen 11 (A16, Wi-Fi)",
+      "model": "iPad15,7",
+      "main_os": "iPadOS 26",
+      "all_os": "iPadOS 18 – iPadOS 27",
+      "t8": 3,
+      "t9": 1,
+      "t10": 0,
+      "t11": 0,
+      "total": 3,
+      "pct_platform": "0.01%",
+      "pct_total": "0.00%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPad Pro 10.5-inch (2017)",
+      "model": "iPad7,3 / iPad7,4 (A1701 / A1709)",
+      "main_os": "iPadOS 17",
+      "all_os": "iPadOS 14 – iPadOS 17 (tối đa 17.7.x)",
+      "t8": 0,
+      "t9": 0,
+      "t10": 1,
+      "t11": 2,
+      "total": 3,
+      "pct_platform": "0.01%",
+      "pct_total": "0.00%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPad Gen 5 (2017)",
+      "model": "iPad6,11 / iPad6,12 (A1822 / A1823)",
+      "main_os": "iPadOS 16",
+      "all_os": "iPadOS 14 – iPadOS 16 (tối đa 16.7.x)",
+      "t8": 1,
+      "t9": 0,
+      "t10": 1,
+      "t11": 0,
+      "total": 2,
+      "pct_platform": "0.01%",
+      "pct_total": "0.00%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPad Air Gen 3 (2019)",
+      "model": "iPad11,3 / iPad11,4 (A2152 / A2123)",
+      "main_os": "iPadOS 26",
+      "all_os": "iPadOS 14 – iPadOS 27",
+      "t8": 1,
+      "t9": 1,
+      "t10": 0,
+      "t11": 0,
+      "total": 1,
+      "pct_platform": "0.00%",
+      "pct_total": "0.00%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPad Air Gen 4 (2020)",
+      "model": "iPad13,1 / iPad13,2 (A2316 / A2324)",
+      "main_os": "iPadOS 26",
+      "all_os": "iPadOS 14 – iPadOS 27",
+      "t8": 1,
+      "t9": 0,
+      "t10": 0,
+      "t11": 0,
+      "total": 1,
+      "pct_platform": "0.00%",
+      "pct_total": "0.00%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPad Air Gen 5 (2022)",
+      "model": "iPad13,16 / iPad13,17 (A2588 / A2589)",
+      "main_os": "iPadOS 26",
+      "all_os": "iPadOS 15.4 – iPadOS 27",
+      "t8": 1,
+      "t9": 0,
+      "t10": 0,
+      "t11": 0,
+      "total": 1,
+      "pct_platform": "0.00%",
+      "pct_total": "0.00%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPad Gen 10 (2022)",
+      "model": "iPad13,18 / iPad13,19 (A2696 / A2757)",
+      "main_os": "iPadOS 26",
+      "all_os": "iPadOS 16 – iPadOS 27",
+      "t8": 1,
+      "t9": 0,
+      "t10": 0,
+      "t11": 0,
+      "total": 1,
+      "pct_platform": "0.00%",
+      "pct_total": "0.00%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPad Gen 11 (A16, Wi-Fi + Cellular)",
+      "model": "iPad15,8",
+      "main_os": "iPadOS 26",
+      "all_os": "iPadOS 18 – iPadOS 27",
+      "t8": 0,
+      "t9": 1,
+      "t10": 0,
+      "t11": 0,
+      "total": 1,
+      "pct_platform": "0.00%",
+      "pct_total": "0.00%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPad Gen 8 (2020)",
+      "model": "iPad11,6 / iPad11,7 (A2270 / A2428)",
+      "main_os": "iPadOS 26",
+      "all_os": "iPadOS 14 – iPadOS 27",
+      "t8": 0,
+      "t9": 1,
+      "t10": 0,
+      "t11": 0,
+      "total": 1,
+      "pct_platform": "0.00%",
+      "pct_total": "0.00%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPad Gen 9 (2021)",
+      "model": "iPad12,1 / iPad12,2 (A2602 / A2604)",
+      "main_os": "iPadOS 26",
+      "all_os": "iPadOS 15 – iPadOS 27",
+      "t8": 1,
+      "t9": 0,
+      "t10": 0,
+      "t11": 0,
+      "total": 1,
+      "pct_platform": "0.00%",
+      "pct_total": "0.00%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPad Pro 11-inch Gen 2 (2020)",
+      "model": "iPad8,9 / iPad8,10 (A2228 / A2068)",
+      "main_os": "iPadOS 26",
+      "all_os": "iPadOS 14 – iPadOS 27",
+      "t8": 2,
+      "t9": 0,
+      "t10": 0,
+      "t11": 0,
+      "total": 1,
+      "pct_platform": "0.00%",
+      "pct_total": "0.00%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPad Pro 11-inch Gen 3 (2021)",
+      "model": "iPad13,4 – iPad13,7 (A2377 / A2459)",
+      "main_os": "iPadOS 26",
+      "all_os": "iPadOS 14.5 – iPadOS 27",
+      "t8": 1,
+      "t9": 0,
+      "t10": 0,
+      "t11": 0,
+      "total": 1,
+      "pct_platform": "0.00%",
+      "pct_total": "0.00%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPad Pro 11-inch Gen 4 (2022)",
+      "model": "iPad14,3 / iPad14,4 (A2759 / A2435)",
+      "main_os": "iPadOS 26",
+      "all_os": "iPadOS 16 – iPadOS 27",
+      "t8": 0,
+      "t9": 1,
+      "t10": 0,
+      "t11": 0,
+      "total": 1,
+      "pct_platform": "0.00%",
+      "pct_total": "0.00%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPad Pro 12.9-inch Gen 5 (2021)",
+      "model": "iPad13,8 – iPad13,11 (A2378 / A2461)",
+      "main_os": "iPadOS 26",
+      "all_os": "iPadOS 14.5 – iPadOS 27",
+      "t8": 0,
+      "t9": 1,
+      "t10": 1,
+      "t11": 0,
+      "total": 1,
+      "pct_platform": "0.00%",
+      "pct_total": "0.00%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPad Pro 9.7-inch (2016)",
+      "model": "iPad6,3 / iPad6,4 (A1673 / A1674)",
+      "main_os": "iPadOS 16",
+      "all_os": "iPadOS 14 – iPadOS 16 (tối đa 16.7.x)",
+      "t8": 0,
+      "t9": 1,
+      "t10": 1,
+      "t11": 0,
+      "total": 1,
+      "pct_platform": "0.00%",
+      "pct_total": "0.00%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPhone 12 (Mã gốc chưa map)",
+      "model": "iPhone13,2 (A2172 / A2403)",
+      "main_os": "iOS 26 / iOS 18",
+      "all_os": "iOS 14 – iOS 27",
+      "t8": 0,
+      "t9": 0,
+      "t10": 0,
+      "t11": 1,
+      "total": 1,
+      "pct_platform": "0.00%",
+      "pct_total": "0.00%"
+    },
+    {
+      "platform": "iOS",
+      "brand": "Apple",
+      "name": "iPad Gen 6 (2018)",
+      "model": "iPad7,5 / iPad7,6 (A1893 / A1954)",
+      "main_os": "iPadOS 17",
+      "all_os": "iPadOS 14 – iPadOS 17 (tối đa 17.7.x)",
+      "t8": 1,
+      "t9": 1,
+      "t10": 0,
+      "t11": 0,
+      "total": 0,
+      "pct_platform": "0.00%",
+      "pct_total": "0.00%"
+    }
+  ],
+  "top_android": [
+    {
+      "platform": "Android",
+      "brand": "Màn hình Android Ô tô / Box",
+      "name": "Màn hình Ô tô / Box (ums512_1h10_Natv)",
+      "model": "ums512_1h10_Natv",
+      "main_os": "Android 10",
+      "all_os": "Android 10; Android 13; Android 12; Android 11; Android 9; Android 8.1",
+      "t8": 696,
+      "t9": 556,
+      "t10": 593,
+      "t11": 287,
+      "total": 1236,
+      "pct_platform": "3.80%",
+      "pct_total": "1.90%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Màn hình Android Ô tô / Box",
+      "name": "Màn hình Ô tô / Box (uis8581a2h10_Automotive)",
+      "model": "uis8581a2h10_Automotive",
+      "main_os": "Android 10",
+      "all_os": "Android 10; Android 13; Android 12; Android 11; Android 9; Android 8.1",
+      "t8": 582,
+      "t9": 527,
+      "t10": 566,
+      "t11": 270,
+      "total": 1152,
+      "pct_platform": "3.54%",
+      "pct_total": "1.77%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Màn hình Android Ô tô / Box",
+      "name": "Màn hình Ô tô / Box (Bengal for arm64)",
+      "model": "Bengal for arm64",
+      "main_os": "Android 10",
+      "all_os": "Android 10; Android 13; Android 12; Android 11; Android 9; Android 8.1",
+      "t8": 314,
+      "t9": 360,
+      "t10": 388,
+      "t11": 214,
+      "total": 694,
+      "pct_platform": "2.13%",
+      "pct_total": "1.07%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy S24 Ultra",
+      "model": "SM-S928B",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 17; Android 15; Android 14",
+      "t8": 230,
+      "t9": 202,
+      "t10": 245,
+      "t11": 95,
+      "total": 479,
+      "pct_platform": "1.47%",
+      "pct_total": "0.74%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy S25 Ultra",
+      "model": "SM-S938B",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 17; Android 15",
+      "t8": 216,
+      "t9": 212,
+      "t10": 253,
+      "t11": 76,
+      "total": 468,
+      "pct_platform": "1.44%",
+      "pct_total": "0.72%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A56",
+      "model": "SM-A566B",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 17; Android 15",
+      "t8": 206,
+      "t9": 175,
+      "t10": 223,
+      "t11": 92,
+      "total": 414,
+      "pct_platform": "1.27%",
+      "pct_total": "0.64%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi Redmi Note 14 4G",
+      "model": "24117RN76O",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 15",
+      "t8": 153,
+      "t9": 131,
+      "t10": 209,
+      "t11": 73,
+      "total": 364,
+      "pct_platform": "1.12%",
+      "pct_total": "0.56%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy S23 Ultra",
+      "model": "SM-S918B",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 17; Android 15; Android 13",
+      "t8": 183,
+      "t9": 150,
+      "t10": 152,
+      "t11": 59,
+      "total": 349,
+      "pct_platform": "1.07%",
+      "pct_total": "0.54%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A55",
+      "model": "SM-A556E",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 15; Android 17",
+      "t8": 173,
+      "t9": 138,
+      "t10": 156,
+      "t11": 67,
+      "total": 330,
+      "pct_platform": "1.01%",
+      "pct_total": "0.51%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi Redmi Note 13 4G",
+      "model": "23129RAA4G",
+      "main_os": "Android 15",
+      "all_os": "Android 15; Android 14; Android 13",
+      "t8": 174,
+      "t9": 137,
+      "t10": 160,
+      "t11": 61,
+      "total": 328,
+      "pct_platform": "1.01%",
+      "pct_total": "0.50%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A15",
+      "model": "SM-A155F",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 15",
+      "t8": 138,
+      "t9": 130,
+      "t10": 159,
+      "t11": 63,
+      "total": 279,
+      "pct_platform": "0.86%",
+      "pct_total": "0.43%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy S22 Ultra",
+      "model": "SM-S908E",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 15; Android 13; Android 9; Android 11; Android 12",
+      "t8": 153,
+      "t9": 139,
+      "t10": 136,
+      "t11": 51,
+      "total": 274,
+      "pct_platform": "0.84%",
+      "pct_total": "0.42%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Màn hình Android Ô tô / Box",
+      "name": "Màn hình Ô tô / Box (s9863a1h10_Natv)",
+      "model": "s9863a1h10_Natv",
+      "main_os": "Android 10",
+      "all_os": "Android 10; Android 13; Android 12; Android 11; Android 9; Android 8.1",
+      "t8": 136,
+      "t9": 99,
+      "t10": 114,
+      "t11": 52,
+      "total": 246,
+      "pct_platform": "0.76%",
+      "pct_total": "0.38%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi Redmi Note 13 Pro",
+      "model": "2312DRA50G",
+      "main_os": "Android 14",
+      "all_os": "Android 14; Android 16; Android 15; Android 13",
+      "t8": 104,
+      "t9": 86,
+      "t10": 120,
+      "t11": 52,
+      "total": 229,
+      "pct_platform": "0.70%",
+      "pct_total": "0.35%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy S26 Ultra",
+      "model": "SM-S948B",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 17",
+      "t8": 81,
+      "t9": 99,
+      "t10": 103,
+      "t11": 33,
+      "total": 208,
+      "pct_platform": "0.64%",
+      "pct_total": "0.32%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A73 5G",
+      "model": "SM-A736B",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 15; Android 12; Android 13",
+      "t8": 106,
+      "t9": 82,
+      "t10": 83,
+      "t11": 31,
+      "total": 188,
+      "pct_platform": "0.58%",
+      "pct_total": "0.29%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy S20 FE 5G",
+      "model": "SM-G780G",
+      "main_os": "Android 13",
+      "all_os": "Android 13; Android 12; Android 11",
+      "t8": 100,
+      "t9": 79,
+      "t10": 89,
+      "t11": 37,
+      "total": 182,
+      "pct_platform": "0.56%",
+      "pct_total": "0.28%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A23",
+      "model": "SM-A235F",
+      "main_os": "Android 14",
+      "all_os": "Android 14; Android 13; Android 12",
+      "t8": 107,
+      "t9": 70,
+      "t10": 83,
+      "t11": 35,
+      "total": 178,
+      "pct_platform": "0.55%",
+      "pct_total": "0.27%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi Redmi Note 11",
+      "model": "2201117TG",
+      "main_os": "Android 13",
+      "all_os": "Android 13; Android 11; Android 12; Android 16",
+      "t8": 95,
+      "t9": 74,
+      "t10": 87,
+      "t11": 36,
+      "total": 174,
+      "pct_platform": "0.53%",
+      "pct_total": "0.27%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A34",
+      "model": "SM-A346E",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15; Android 13",
+      "t8": 96,
+      "t9": 71,
+      "t10": 84,
+      "t11": 32,
+      "total": 168,
+      "pct_platform": "0.52%",
+      "pct_total": "0.26%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A17 4G",
+      "model": "SM-A175F",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15; Android 17",
+      "t8": 68,
+      "t9": 60,
+      "t10": 101,
+      "t11": 39,
+      "total": 163,
+      "pct_platform": "0.50%",
+      "pct_total": "0.25%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A17",
+      "model": "SM-A176B",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15; Android 17",
+      "t8": 70,
+      "t9": 67,
+      "t10": 94,
+      "t11": 39,
+      "total": 161,
+      "pct_platform": "0.49%",
+      "pct_total": "0.25%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi Redmi Note 12 4G",
+      "model": "23021RAAEG",
+      "main_os": "Android 15",
+      "all_os": "Android 15; Android 14; Android 13",
+      "t8": 75,
+      "t9": 63,
+      "t10": 75,
+      "t11": 37,
+      "total": 161,
+      "pct_platform": "0.49%",
+      "pct_total": "0.25%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A13",
+      "model": "SM-A135F",
+      "main_os": "Android 14",
+      "all_os": "Android 14; Android 13; Android 12",
+      "t8": 100,
+      "t9": 81,
+      "t10": 82,
+      "t11": 24,
+      "total": 159,
+      "pct_platform": "0.49%",
+      "pct_total": "0.24%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy Note10+",
+      "model": "SM-N975F",
+      "main_os": "Android 12",
+      "all_os": "Android 12; Android 11; Android 16",
+      "t8": 71,
+      "t9": 63,
+      "t10": 77,
+      "t11": 19,
+      "total": 156,
+      "pct_platform": "0.48%",
+      "pct_total": "0.24%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Doro",
+      "name": "Doro 8050",
+      "model": "DSB-0230",
+      "main_os": "Android 13",
+      "all_os": "Android 13; Android 12; Android 11",
+      "t8": 95,
+      "t9": 94,
+      "t10": 86,
+      "t11": 45,
+      "total": 155,
+      "pct_platform": "0.48%",
+      "pct_total": "0.24%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy S25 FE",
+      "model": "SM-S731B",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 17",
+      "t8": 69,
+      "t9": 70,
+      "t10": 88,
+      "t11": 32,
+      "total": 154,
+      "pct_platform": "0.47%",
+      "pct_total": "0.24%"
+    },
+    {
+      "platform": "Android",
+      "brand": "OPPO",
+      "name": "OPPO Reno14 F",
+      "model": "CPH2743",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15",
+      "t8": 88,
+      "t9": 56,
+      "t10": 71,
+      "t11": 35,
+      "total": 151,
+      "pct_platform": "0.46%",
+      "pct_total": "0.23%"
+    },
+    {
+      "platform": "Android",
+      "brand": "OPPO",
+      "name": "OPPO A58 4G",
+      "model": "CPH2577",
+      "main_os": "Android 15",
+      "all_os": "Android 15; Android 13; Android 14",
+      "t8": 72,
+      "t9": 64,
+      "t10": 75,
+      "t11": 35,
+      "total": 150,
+      "pct_platform": "0.46%",
+      "pct_total": "0.23%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi 14T",
+      "model": "2406APNFAG",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15; Android 14",
+      "t8": 74,
+      "t9": 65,
+      "t10": 78,
+      "t11": 26,
+      "total": 149,
+      "pct_platform": "0.46%",
+      "pct_total": "0.23%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Honor",
+      "name": "Honor X9d",
+      "model": "MTN-NX1",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15",
+      "t8": 57,
+      "t9": 50,
+      "t10": 89,
+      "t11": 36,
+      "total": 148,
+      "pct_platform": "0.45%",
+      "pct_total": "0.23%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A16",
+      "model": "SM-A165F",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15; Android 14",
+      "t8": 76,
+      "t9": 58,
+      "t10": 85,
+      "t11": 30,
+      "total": 148,
+      "pct_platform": "0.45%",
+      "pct_total": "0.23%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A53 5G",
+      "model": "SM-A536E",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 15; Android 13; Android 12",
+      "t8": 81,
+      "t9": 62,
+      "t10": 75,
+      "t11": 32,
+      "total": 147,
+      "pct_platform": "0.45%",
+      "pct_total": "0.23%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi Redmi 13",
+      "model": "2404ARN45A",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 15",
+      "t8": 60,
+      "t9": 59,
+      "t10": 80,
+      "t11": 33,
+      "total": 140,
+      "pct_platform": "0.43%",
+      "pct_total": "0.22%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy S24 FE",
+      "model": "SM-S721B",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 17; Android 15; Android 14",
+      "t8": 68,
+      "t9": 72,
+      "t10": 72,
+      "t11": 29,
+      "total": 133,
+      "pct_platform": "0.41%",
+      "pct_total": "0.20%"
+    },
+    {
+      "platform": "Android",
+      "brand": "OPPO",
+      "name": "OPPO Reno13 F 5G",
+      "model": "CPH2699",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15",
+      "t8": 66,
+      "t9": 55,
+      "t10": 65,
+      "t11": 21,
+      "total": 131,
+      "pct_platform": "0.40%",
+      "pct_total": "0.20%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A35",
+      "model": "SM-A356E",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 15; Android 17",
+      "t8": 69,
+      "t9": 53,
+      "t10": 63,
+      "t11": 22,
+      "total": 130,
+      "pct_platform": "0.40%",
+      "pct_total": "0.20%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A52s 5G",
+      "model": "SM-A528B",
+      "main_os": "Android 14",
+      "all_os": "Android 14; Android 12; Android 13; Android 11",
+      "t8": 58,
+      "t9": 47,
+      "t10": 67,
+      "t11": 26,
+      "total": 130,
+      "pct_platform": "0.40%",
+      "pct_total": "0.20%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A16",
+      "model": "SM-A166P",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 15",
+      "t8": 59,
+      "t9": 58,
+      "t10": 61,
+      "t11": 22,
+      "total": 129,
+      "pct_platform": "0.40%",
+      "pct_total": "0.20%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A36",
+      "model": "SM-A366B",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15; Android 17",
+      "t8": 59,
+      "t9": 56,
+      "t10": 71,
+      "t11": 29,
+      "total": 129,
+      "pct_platform": "0.40%",
+      "pct_total": "0.20%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy S23 Ultra",
+      "model": "SM-S918N",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 17; Android 15",
+      "t8": 57,
+      "t9": 52,
+      "t10": 72,
+      "t11": 22,
+      "total": 129,
+      "pct_platform": "0.40%",
+      "pct_total": "0.20%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi Redmi 12",
+      "model": "23053RN02A",
+      "main_os": "Android 15",
+      "all_os": "Android 15; Android 14; Android 13",
+      "t8": 67,
+      "t9": 53,
+      "t10": 49,
+      "t11": 27,
+      "total": 129,
+      "pct_platform": "0.40%",
+      "pct_total": "0.20%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Màn hình Android Ô tô / Box",
+      "name": "Màn hình Ô tô / Box (ss80x_64)",
+      "model": "ss80x_64",
+      "main_os": "Android 10",
+      "all_os": "Android 10; Android 13; Android 12; Android 11; Android 9; Android 8.1",
+      "t8": 78,
+      "t9": 61,
+      "t10": 61,
+      "t11": 29,
+      "total": 127,
+      "pct_platform": "0.39%",
+      "pct_total": "0.20%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A26",
+      "model": "SM-A266B",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15; Android 17",
+      "t8": 64,
+      "t9": 52,
+      "t10": 64,
+      "t11": 31,
+      "total": 126,
+      "pct_platform": "0.39%",
+      "pct_total": "0.19%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi Redmi Note 15 Pro",
+      "model": "25080RABDG",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15",
+      "t8": 44,
+      "t9": 46,
+      "t10": 68,
+      "t11": 42,
+      "total": 126,
+      "pct_platform": "0.39%",
+      "pct_total": "0.19%"
+    },
+    {
+      "platform": "Android",
+      "brand": "OPPO",
+      "name": "OPPO A60",
+      "model": "CPH2631",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15; Android 14",
+      "t8": 60,
+      "t9": 53,
+      "t10": 67,
+      "t11": 31,
+      "total": 125,
+      "pct_platform": "0.38%",
+      "pct_total": "0.19%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A05s",
+      "model": "SM-A057F",
+      "main_os": "Android 15",
+      "all_os": "Android 15; Android 14; Android 13",
+      "t8": 60,
+      "t9": 55,
+      "t10": 67,
+      "t11": 26,
+      "total": 125,
+      "pct_platform": "0.38%",
+      "pct_total": "0.19%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi 15T",
+      "model": "25069PTEBG",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15",
+      "t8": 52,
+      "t9": 53,
+      "t10": 61,
+      "t11": 27,
+      "total": 125,
+      "pct_platform": "0.38%",
+      "pct_total": "0.19%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi Redmi Note 15 4G",
+      "model": "2510DRA23E",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15",
+      "t8": 39,
+      "t9": 45,
+      "t10": 77,
+      "t11": 24,
+      "total": 123,
+      "pct_platform": "0.38%",
+      "pct_total": "0.19%"
+    },
+    {
+      "platform": "Android",
+      "brand": "OPPO",
+      "name": "OPPO Reno8 T 5G",
+      "model": "CPH2505",
+      "main_os": "Android 15",
+      "all_os": "Android 15; Android 13; Android 14",
+      "t8": 66,
+      "t9": 58,
+      "t10": 59,
+      "t11": 19,
+      "total": 122,
+      "pct_platform": "0.37%",
+      "pct_total": "0.19%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A32",
+      "model": "SM-A325F",
+      "main_os": "Android 13",
+      "all_os": "Android 13; Android 12; Android 11",
+      "t8": 70,
+      "t9": 66,
+      "t10": 50,
+      "t11": 25,
+      "total": 121,
+      "pct_platform": "0.37%",
+      "pct_total": "0.19%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A12",
+      "model": "SM-A125F",
+      "main_os": "Android 12",
+      "all_os": "Android 12; Android 11; Android 10",
+      "t8": 65,
+      "t9": 55,
+      "t10": 46,
+      "t11": 20,
+      "total": 120,
+      "pct_platform": "0.37%",
+      "pct_total": "0.18%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi Redmi Note 13 Pro 4G",
+      "model": "23117RA68G",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15; Android 13; Android 14",
+      "t8": 52,
+      "t9": 52,
+      "t10": 63,
+      "t11": 20,
+      "total": 118,
+      "pct_platform": "0.36%",
+      "pct_total": "0.18%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy M51",
+      "model": "SM-M515F",
+      "main_os": "Android 12",
+      "all_os": "Android 12; Android 11; Android 10",
+      "t8": 56,
+      "t9": 49,
+      "t10": 65,
+      "t11": 26,
+      "total": 116,
+      "pct_platform": "0.36%",
+      "pct_total": "0.18%"
+    },
+    {
+      "platform": "Android",
+      "brand": "OPPO",
+      "name": "OPPO Reno15 F",
+      "model": "CPH2801",
+      "main_os": "Android 16",
+      "all_os": "Android 16",
+      "t8": 58,
+      "t9": 60,
+      "t10": 64,
+      "t11": 28,
+      "total": 115,
+      "pct_platform": "0.35%",
+      "pct_total": "0.18%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi Redmi Note 14 Pro+",
+      "model": "24115RA8EG",
+      "main_os": "Android 15",
+      "all_os": "Android 15; Android 16; Android 14",
+      "t8": 54,
+      "t9": 45,
+      "t10": 58,
+      "t11": 19,
+      "total": 113,
+      "pct_platform": "0.35%",
+      "pct_total": "0.17%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A33",
+      "model": "SM-A336E",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 15; Android 13; Android 12",
+      "t8": 68,
+      "t9": 47,
+      "t10": 57,
+      "t11": 25,
+      "total": 111,
+      "pct_platform": "0.34%",
+      "pct_total": "0.17%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy S23 FE",
+      "model": "SM-S711B",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 15; Android 13",
+      "t8": 59,
+      "t9": 45,
+      "t10": 59,
+      "t11": 18,
+      "total": 109,
+      "pct_platform": "0.33%",
+      "pct_total": "0.17%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A57",
+      "model": "SM-A576B",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 17",
+      "t8": 33,
+      "t9": 37,
+      "t10": 71,
+      "t11": 22,
+      "total": 107,
+      "pct_platform": "0.33%",
+      "pct_total": "0.16%"
+    },
+    {
+      "platform": "Android",
+      "brand": "OPPO",
+      "name": "OPPO Reno12",
+      "model": "CPH2625",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15; Android 14",
+      "t8": 56,
+      "t9": 35,
+      "t10": 58,
+      "t11": 20,
+      "total": 106,
+      "pct_platform": "0.33%",
+      "pct_total": "0.16%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi 14T Pro",
+      "model": "2407FPN8EG",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 15",
+      "t8": 53,
+      "t9": 39,
+      "t10": 48,
+      "t11": 23,
+      "total": 106,
+      "pct_platform": "0.33%",
+      "pct_total": "0.16%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A07 4G",
+      "model": "SM-A075F",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15; Android 17",
+      "t8": 50,
+      "t9": 46,
+      "t10": 56,
+      "t11": 22,
+      "total": 104,
+      "pct_platform": "0.32%",
+      "pct_total": "0.16%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A14",
+      "model": "SM-A145F",
+      "main_os": "Android 15",
+      "all_os": "Android 15; Android 14; Android 13",
+      "t8": 48,
+      "t9": 45,
+      "t10": 58,
+      "t11": 22,
+      "total": 104,
+      "pct_platform": "0.32%",
+      "pct_total": "0.16%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A22 4G",
+      "model": "SM-A225F",
+      "main_os": "Android 13",
+      "all_os": "Android 13; Android 12; Android 11",
+      "t8": 55,
+      "t9": 45,
+      "t10": 44,
+      "t11": 8,
+      "total": 103,
+      "pct_platform": "0.32%",
+      "pct_total": "0.16%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi Redmi Note 14 Pro 5G",
+      "model": "24090RA29G",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 15",
+      "t8": 50,
+      "t9": 44,
+      "t10": 57,
+      "t11": 27,
+      "total": 103,
+      "pct_platform": "0.32%",
+      "pct_total": "0.16%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi Redmi 13C",
+      "model": "23106RN0DA",
+      "main_os": "Android 15",
+      "all_os": "Android 15; Android 13; Android 14",
+      "t8": 43,
+      "t9": 43,
+      "t10": 55,
+      "t11": 27,
+      "total": 102,
+      "pct_platform": "0.31%",
+      "pct_total": "0.16%"
+    },
+    {
+      "platform": "Android",
+      "brand": "OPPO",
+      "name": "OPPO Reno10",
+      "model": "CPH2531",
+      "main_os": "Android 15",
+      "all_os": "Android 15; Android 14; Android 13",
+      "t8": 47,
+      "t9": 44,
+      "t10": 57,
+      "t11": 19,
+      "total": 101,
+      "pct_platform": "0.31%",
+      "pct_total": "0.16%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A54",
+      "model": "SM-A546E",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 15; Android 13; Android 17",
+      "t8": 55,
+      "t9": 46,
+      "t10": 52,
+      "t11": 17,
+      "total": 101,
+      "pct_platform": "0.31%",
+      "pct_total": "0.16%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A51",
+      "model": "SM-A515F",
+      "main_os": "Android 13",
+      "all_os": "Android 13; Android 12; Android 11; Android 10; Android 16",
+      "t8": 53,
+      "t9": 54,
+      "t10": 49,
+      "t11": 17,
+      "total": 100,
+      "pct_platform": "0.31%",
+      "pct_total": "0.15%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy S21 FE",
+      "model": "SM-G990E",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 15; Android 13; Android 12",
+      "t8": 60,
+      "t9": 43,
+      "t10": 35,
+      "t11": 17,
+      "total": 100,
+      "pct_platform": "0.31%",
+      "pct_total": "0.15%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A24 4G",
+      "model": "SM-A245F",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 15; Android 13",
+      "t8": 53,
+      "t9": 43,
+      "t10": 55,
+      "t11": 23,
+      "total": 99,
+      "pct_platform": "0.30%",
+      "pct_total": "0.15%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A71",
+      "model": "SM-A715F",
+      "main_os": "Android 13",
+      "all_os": "Android 13; Android 11; Android 12; Android 10",
+      "t8": 55,
+      "t9": 41,
+      "t10": 43,
+      "t11": 18,
+      "total": 97,
+      "pct_platform": "0.30%",
+      "pct_total": "0.15%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi Redmi Note 11 Pro (China)",
+      "model": "2201116TG",
+      "main_os": "Android 13",
+      "all_os": "Android 13; Android 11; Android 12",
+      "t8": 45,
+      "t9": 42,
+      "t10": 43,
+      "t11": 19,
+      "total": 97,
+      "pct_platform": "0.30%",
+      "pct_total": "0.15%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi Redmi 15 4G",
+      "model": "25062RN2DA",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15",
+      "t8": 38,
+      "t9": 38,
+      "t10": 57,
+      "t11": 21,
+      "total": 96,
+      "pct_platform": "0.29%",
+      "pct_total": "0.15%"
+    },
+    {
+      "platform": "Android",
+      "brand": "OPPO",
+      "name": "OPPO A18",
+      "model": "CPH2591",
+      "main_os": "Android 15",
+      "all_os": "Android 15; Android 14; Android 13",
+      "t8": 47,
+      "t9": 45,
+      "t10": 45,
+      "t11": 22,
+      "total": 93,
+      "pct_platform": "0.29%",
+      "pct_total": "0.14%"
+    },
+    {
+      "platform": "Android",
+      "brand": "OPPO",
+      "name": "OPPO Reno12 F",
+      "model": "CPH2637",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15; Android 14",
+      "t8": 51,
+      "t9": 42,
+      "t10": 42,
+      "t11": 16,
+      "total": 91,
+      "pct_platform": "0.28%",
+      "pct_total": "0.14%"
+    },
+    {
+      "platform": "Android",
+      "brand": "OPPO",
+      "name": "OPPO A6 Pro 4G",
+      "model": "CPH2799",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15",
+      "t8": 36,
+      "t9": 39,
+      "t10": 51,
+      "t11": 22,
+      "total": 90,
+      "pct_platform": "0.28%",
+      "pct_total": "0.14%"
+    },
+    {
+      "platform": "Android",
+      "brand": "OPPO",
+      "name": "OPPO Reno5 4G",
+      "model": "CPH2159",
+      "main_os": "Android 13",
+      "all_os": "Android 13; Android 11",
+      "t8": 44,
+      "t9": 41,
+      "t10": 44,
+      "t11": 21,
+      "total": 90,
+      "pct_platform": "0.28%",
+      "pct_total": "0.14%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A06",
+      "model": "SM-A065F",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 15",
+      "t8": 44,
+      "t9": 36,
+      "t10": 41,
+      "t11": 17,
+      "total": 90,
+      "pct_platform": "0.28%",
+      "pct_total": "0.14%"
+    },
+    {
+      "platform": "Android",
+      "brand": "OPPO",
+      "name": "OPPO Reno6 Z",
+      "model": "CPH2237",
+      "main_os": "Android 13",
+      "all_os": "Android 13; Android 12; Android 11",
+      "t8": 45,
+      "t9": 40,
+      "t10": 46,
+      "t11": 13,
+      "total": 89,
+      "pct_platform": "0.27%",
+      "pct_total": "0.14%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy M15 5G 2024",
+      "model": "SM-M156B",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15; Android 14",
+      "t8": 45,
+      "t9": 43,
+      "t10": 39,
+      "t11": 17,
+      "total": 89,
+      "pct_platform": "0.27%",
+      "pct_total": "0.14%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy S24 Ultra",
+      "model": "SM-S928N",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 17; Android 14",
+      "t8": 33,
+      "t9": 31,
+      "t10": 53,
+      "t11": 23,
+      "total": 89,
+      "pct_platform": "0.27%",
+      "pct_total": "0.14%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi 15T Pro",
+      "model": "2506BPN68G",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 17; Android 15",
+      "t8": 46,
+      "t9": 41,
+      "t10": 37,
+      "t11": 14,
+      "total": 88,
+      "pct_platform": "0.27%",
+      "pct_total": "0.14%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi Redmi Turbo 4 Pro",
+      "model": "25053RT47C",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15",
+      "t8": 30,
+      "t9": 27,
+      "t10": 50,
+      "t11": 12,
+      "total": 86,
+      "pct_platform": "0.26%",
+      "pct_total": "0.13%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Khác / Chưa định danh",
+      "name": "K706",
+      "model": "K706",
+      "main_os": "Không rõ (nhóm (not set) CSV)",
+      "all_os": "Không rõ",
+      "t8": 51,
+      "t9": 42,
+      "t10": 41,
+      "t11": 25,
+      "total": 85,
+      "pct_platform": "0.26%",
+      "pct_total": "0.13%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy S22 Ultra",
+      "model": "SM-S908U1",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 15",
+      "t8": 38,
+      "t9": 39,
+      "t10": 42,
+      "t11": 14,
+      "total": 85,
+      "pct_platform": "0.26%",
+      "pct_total": "0.13%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi Redmi Note 14 Pro 4G",
+      "model": "24116RACCG",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15; Android 14",
+      "t8": 44,
+      "t9": 40,
+      "t10": 50,
+      "t11": 22,
+      "total": 85,
+      "pct_platform": "0.26%",
+      "pct_total": "0.13%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A12 Nacho",
+      "model": "SM-A127F",
+      "main_os": "Android 13",
+      "all_os": "Android 13; Android 12; Android 11",
+      "t8": 54,
+      "t9": 42,
+      "t10": 29,
+      "t11": 15,
+      "total": 84,
+      "pct_platform": "0.26%",
+      "pct_total": "0.13%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Màn hình Android Ô tô / Box",
+      "name": "Màn hình Ô tô / Box (IHU629G)",
+      "model": "IHU629G",
+      "main_os": "Android 10",
+      "all_os": "Android 10; Android 13; Android 12; Android 11; Android 9; Android 8.1",
+      "t8": 28,
+      "t9": 28,
+      "t10": 43,
+      "t11": 19,
+      "total": 83,
+      "pct_platform": "0.26%",
+      "pct_total": "0.13%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi 13T",
+      "model": "2306EPN60G",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15; Android 14; Android 13",
+      "t8": 41,
+      "t9": 28,
+      "t10": 44,
+      "t11": 15,
+      "total": 82,
+      "pct_platform": "0.25%",
+      "pct_total": "0.13%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A05",
+      "model": "SM-A055F",
+      "main_os": "Android 15",
+      "all_os": "Android 15; Android 14; Android 13",
+      "t8": 40,
+      "t9": 34,
+      "t10": 34,
+      "t11": 13,
+      "total": 80,
+      "pct_platform": "0.25%",
+      "pct_total": "0.12%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung SM-A066B",
+      "model": "SM-A066B",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15",
+      "t8": 33,
+      "t9": 35,
+      "t10": 44,
+      "t11": 17,
+      "total": 80,
+      "pct_platform": "0.25%",
+      "pct_total": "0.12%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy S21 Ultra 5G",
+      "model": "SM-G998B",
+      "main_os": "Android 15",
+      "all_os": "Android 15; Android 14; Android 13; Android 12; Android 9; Android 11",
+      "t8": 42,
+      "t9": 35,
+      "t10": 31,
+      "t11": 18,
+      "total": 78,
+      "pct_platform": "0.24%",
+      "pct_total": "0.12%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy Note9",
+      "model": "SM-N960F",
+      "main_os": "Android 10",
+      "all_os": "Android 10; Android 9; Android 13; Android 8.1.0",
+      "t8": 37,
+      "t9": 37,
+      "t10": 29,
+      "t11": 9,
+      "total": 77,
+      "pct_platform": "0.24%",
+      "pct_total": "0.12%"
+    },
+    {
+      "platform": "Android",
+      "brand": "OPPO",
+      "name": "OPPO A95",
+      "model": "CPH2365",
+      "main_os": "Android 13",
+      "all_os": "Android 13; Android 11",
+      "t8": 39,
+      "t9": 32,
+      "t10": 33,
+      "t11": 15,
+      "total": 75,
+      "pct_platform": "0.23%",
+      "pct_total": "0.12%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Xiaomi",
+      "name": "Xiaomi Redmi Note 12 Pro 4G",
+      "model": "2209116AG",
+      "main_os": "Android 13",
+      "all_os": "Android 13; Android 12; Android 11",
+      "t8": 32,
+      "t9": 32,
+      "t10": 42,
+      "t11": 15,
+      "total": 75,
+      "pct_platform": "0.23%",
+      "pct_total": "0.12%"
+    },
+    {
+      "platform": "Android",
+      "brand": "OPPO",
+      "name": "OPPO F25 Pro",
+      "model": "CPH2603",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 15; Android 14",
+      "t8": 34,
+      "t9": 29,
+      "t10": 30,
+      "t11": 17,
+      "total": 74,
+      "pct_platform": "0.23%",
+      "pct_total": "0.11%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy A25",
+      "model": "SM-A256E",
+      "main_os": "Android 16",
+      "all_os": "Android 16; Android 14; Android 15",
+      "t8": 44,
+      "t9": 34,
+      "t10": 35,
+      "t11": 12,
+      "total": 74,
+      "pct_platform": "0.23%",
+      "pct_total": "0.11%"
+    },
+    {
+      "platform": "Android",
+      "brand": "Samsung",
+      "name": "Samsung Galaxy Note10+ 5G",
+      "model": "SM-N976N",
+      "main_os": "Android 12",
+      "all_os": "Android 12; Android 10; Android 13",
+      "t8": 42,
+      "t9": 28,
+      "t10": 25,
+      "t11": 9,
+      "total": 74,
+      "pct_platform": "0.23%",
+      "pct_total": "0.11%"
+    },
+    {
+      "platform": "Android",
+      "brand": "OPPO",
+      "name": "OPPO Reno8 Z",
+      "model": "CPH2457",
+      "main_os": "Android 14",
+      "all_os": "Android 14; Android 12; Android 13",
+      "t8": 37,
+      "t9": 27,
+      "t10": 38,
+      "t11": 14,
+      "total": 72,
+      "pct_platform": "0.22%",
+      "pct_total": "0.11%"
+    }
+  ],
+  "all_devices_count": 2115
+};
+    
+    let currentPlatform = 'all';
+    let currentChartMode = 'devices'; // 'devices', 'os', 'monthly'
+    let searchQuery = '';
+    let currentPage = 1;
+    const PAGE_SIZE = 25;
+
+    function setPlatform(plat) {
+      currentPlatform = plat;
+      currentPage = 1;
+      
+      ['all', 'ios', 'android'].forEach(p => {
+        const btn = document.getElementById('tab-' + p);
+        if (p === plat) {
+          btn.className = 'tab-btn active px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition border border-slate-200';
+        } else {
+          btn.className = 'tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-slate-100 text-slate-700 hover:bg-slate-200';
+        }
+      });
+
+      renderDashboard();
+    }
+
+    function setChartMode(mode) {
+      currentChartMode = mode;
+      
+      ['devices', 'os', 'monthly'].forEach(m => {
+        const btn = document.getElementById('btn-mode-' + m);
+        if (m === mode) {
+          btn.className = 'chart-btn active px-3 py-1.5 rounded-lg border border-transparent transition';
+        } else {
+          btn.className = 'chart-btn px-3 py-1.5 rounded-lg border border-transparent transition text-slate-600 hover:text-slate-900';
+        }
+      });
+
+      renderColumnChart();
+    }
+
+    function handleSearch() {
+      searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
+      currentPage = 1;
+      renderDashboard();
+    }
+
+    function getFilteredDevices() {
+      let list = [];
+      if (currentPlatform === 'all') {
+        list = RAW_DATA.top_combined;
+      } else if (currentPlatform === 'ios') {
+        list = RAW_DATA.top_ios;
+      } else {
+        list = RAW_DATA.top_android;
+      }
+
+      if (searchQuery) {
+        list = list.filter(d => 
+          d.name.toLowerCase().includes(searchQuery) ||
+          d.model.toLowerCase().includes(searchQuery) ||
+          d.brand.toLowerCase().includes(searchQuery) ||
+          d.main_os.toLowerCase().includes(searchQuery)
+        );
+      }
+      return list;
+    }
+
+    // ==========================================
+    // RENDER VERTICAL COLUMN CHART (SVG)
+    // ==========================================
+    function renderColumnChart() {
+      const wrapper = document.getElementById('svg-chart-wrapper');
+      const titleEl = document.getElementById('column-chart-title');
+      const subtitleEl = document.getElementById('column-chart-subtitle');
+      const legendEl = document.getElementById('chart-legend');
+
+      if (currentChartMode === 'devices') {
+        renderDevicesColumnChart(wrapper, titleEl, subtitleEl, legendEl);
+      } else if (currentChartMode === 'os') {
+        renderOSColumnChart(wrapper, titleEl, subtitleEl, legendEl);
+      } else {
+        renderMonthlyColumnChart(wrapper, titleEl, subtitleEl, legendEl);
+      }
+    }
+
+    // 1. Column chart for TOP DEVICES
+    function renderDevicesColumnChart(wrapper, titleEl, subtitleEl, legendEl) {
+      const filtered = getFilteredDevices();
+      const topItems = filtered.slice(0, 15);
+
+      titleEl.innerText = "Biểu Đồ Cột: Top 15 Thiết Bị Theo Tên Thương Mại & Phiên Bản HĐH";
+      subtitleEl.innerText = "Số lượng người dùng từng dòng máy (Cột xanh dương: iOS, Cột xanh lá: Android)";
+
+      if (topItems.length === 0) {
+        wrapper.innerHTML = '<div class="text-center py-16 text-slate-400">Không có dữ liệu phù hợp để vẽ biểu đồ</div>';
+        legendEl.innerHTML = '';
+        return;
+      }
+
+      const svgWidth = 960;
+      const svgHeight = 360;
+      const chartTop = 35;
+      const chartBottom = 265;
+      const chartLeft = 55;
+      const chartRight = 940;
+      const chartWidth = chartRight - chartLeft;
+      const chartHeight = chartBottom - chartTop;
+
+      const maxVal = Math.ceil(topItems[0].total / 500) * 500 || 5000;
+      const barCount = topItems.length;
+      const barWidth = Math.min(38, Math.floor((chartWidth / barCount) * 0.65));
+      const step = chartWidth / barCount;
+
+      // Gridlines
+      let gridSvg = '';
+      const gridSteps = 5;
+      for (let i = 0; i <= gridSteps; i++) {
+        const val = Math.round((maxVal / gridSteps) * i);
+        const y = chartBottom - (val / maxVal) * chartHeight;
+        gridSvg += `
+          <line x1="${chartLeft}" y1="${y}" x2="${chartRight}" y2="${y}" stroke="#e2e8f0" stroke-dasharray="3,3" />
+          <text x="${chartLeft - 8}" y="${y + 4}" font-size="10" fill="#94a3b8" text-anchor="end">${val.toLocaleString()}</text>
+        `;
+      }
+
+      // Columns
+      let barsSvg = '';
+      topItems.forEach((d, idx) => {
+        const x = chartLeft + idx * step + (step - barWidth) / 2;
+        const bHeight = Math.max(4, (d.total / maxVal) * chartHeight);
+        const y = chartBottom - bHeight;
+
+        const isIOS = d.platform === 'iOS';
+        const fillId = isIOS ? 'url(#iosGradient)' : 'url(#andGradient)';
+
+        // Escaped attributes for tooltip
+        const safeName = d.name.replace(/"/g, '&quot;');
+        const safeModel = d.model.replace(/"/g, '&quot;');
+        const safeOS = d.main_os.replace(/"/g, '&quot;');
+
+        barsSvg += `
+          <g class="bar-group" 
+             onmouseenter="showTooltip(event, '${safeName}', '${safeModel}', '${safeOS}', '${d.total.toLocaleString()}', '${d.pct_total}')"
+             onmousemove="moveTooltip(event)"
+             onmouseleave="hideTooltip()">
+            
+            <!-- COLUMN RECT -->
+            <rect class="bar-rect" x="${x}" y="${y}" width="${barWidth}" height="${bHeight}" rx="4" fill="${fillId}" />
+            
+            <!-- TOP VALUE LABEL -->
+            <text x="${x + barWidth / 2}" y="${y - 6}" font-size="10.5" font-weight="700" fill="#1e293b" text-anchor="middle">
+              ${d.total.toLocaleString()}
+            </text>
+            
+            <!-- BOTTOM ROTATED DEVICE NAME -->
+            <text x="${x + barWidth / 2}" y="${chartBottom + 14}" font-size="10.5" font-weight="500" fill="#334155" text-anchor="end" transform="rotate(-38, ${x + barWidth / 2}, ${chartBottom + 14})">
+              ${d.name.length > 20 ? d.name.substring(0, 19) + '…' : d.name}
+            </text>
+
+            <!-- OS BADGE AT BOTTOM -->
+            <text x="${x + barWidth / 2}" y="${chartBottom + 80}" font-size="9" font-weight="600" fill="${isIOS ? '#0284c7' : '#059669'}" text-anchor="end" transform="rotate(-38, ${x + barWidth / 2}, ${chartBottom + 80})">
+              ${d.main_os}
+            </text>
+          </g>
+        `;
+      });
+
+      wrapper.innerHTML = `
+        <svg viewBox="0 0 ${svgWidth} ${svgHeight + 30}" class="w-full h-auto overflow-visible select-none">
+          <defs>
+            <linearGradient id="iosGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#3b82f6" />
+              <stop offset="100%" stop-color="#1d4ed8" />
+            </linearGradient>
+            <linearGradient id="andGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#10b981" />
+              <stop offset="100%" stop-color="#047857" />
+            </linearGradient>
+          </defs>
+
+          <!-- GRIDLINES & Y AXIS -->
+          ${gridSvg}
+          <line x1="${chartLeft}" y1="${chartBottom}" x2="${chartRight}" y2="${chartBottom}" stroke="#cbd5e1" stroke-width="1.5" />
+
+          <!-- BARS -->
+          ${barsSvg}
+        </svg>
+      `;
+
+      legendEl.innerHTML = `
+        <div class="flex items-center gap-4">
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-blue-600"></span> Thiết bị iOS (Apple)</span>
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-600"></span> Thiết bị Android</span>
+        </div>
+        <div class="text-slate-400">Rê chuột vào từng cột để xem chi tiết Model, Phiên bản HĐH và Tỷ trọng %</div>
+      `;
+    }
+
+    // 2. Column chart for OS MAJOR
+    function renderOSColumnChart(wrapper, titleEl, subtitleEl, legendEl) {
+      titleEl.innerText = "Biểu Đồ Cột: Phân Bổ Theo Phiên Bản Hệ Điều Hành (OS Major)";
+      subtitleEl.innerText = "So sánh quy mô người dùng giữa các thế hệ hệ điều hành lớn của iOS và Android";
+
+      const osList = RAW_DATA.overview.os_major.slice(0, 12);
+      const svgWidth = 960;
+      const svgHeight = 360;
+      const chartTop = 35;
+      const chartBottom = 265;
+      const chartLeft = 55;
+      const chartRight = 940;
+      const chartWidth = chartRight - chartLeft;
+      const chartHeight = chartBottom - chartTop;
+
+      const maxVal = Math.ceil(osList[0].users / 2000) * 2000 || 20000;
+      const barCount = osList.length;
+      const barWidth = Math.min(46, Math.floor((chartWidth / barCount) * 0.65));
+      const step = chartWidth / barCount;
+
+      let gridSvg = '';
+      const gridSteps = 5;
+      for (let i = 0; i <= gridSteps; i++) {
+        const val = Math.round((maxVal / gridSteps) * i);
+        const y = chartBottom - (val / maxVal) * chartHeight;
+        gridSvg += `
+          <line x1="${chartLeft}" y1="${y}" x2="${chartRight}" y2="${y}" stroke="#e2e8f0" stroke-dasharray="3,3" />
+          <text x="${chartLeft - 8}" y="${y + 4}" font-size="10" fill="#94a3b8" text-anchor="end">${val.toLocaleString()}</text>
+        `;
+      }
+
+      let barsSvg = '';
+      osList.forEach((o, idx) => {
+        const x = chartLeft + idx * step + (step - barWidth) / 2;
+        const bHeight = Math.max(4, (o.users / maxVal) * chartHeight);
+        const y = chartBottom - bHeight;
+
+        const isIOS = o.platform === 'iOS';
+        const color = isIOS ? '#2563eb' : '#059669';
+
+        barsSvg += `
+          <g class="bar-group" 
+             onmouseenter="showTooltip(event, '${o.name}', 'Hệ điều hành ${o.platform}', '${o.name}', '${o.users.toLocaleString()}', '${o.pct_total}% (${o.pct_platform}% trong ${o.platform})')"
+             onmousemove="moveTooltip(event)"
+             onmouseleave="hideTooltip()">
+            
+            <rect class="bar-rect" x="${x}" y="${y}" width="${barWidth}" height="${bHeight}" rx="4" fill="${color}" />
+            
+            <text x="${x + barWidth / 2}" y="${y - 6}" font-size="10" font-weight="700" fill="#1e293b" text-anchor="middle">
+              ${o.users.toLocaleString()}
+            </text>
+            
+            <text x="${x + barWidth / 2}" y="${chartBottom + 16}" font-size="11" font-weight="600" fill="#334155" text-anchor="end" transform="rotate(-35, ${x + barWidth / 2}, ${chartBottom + 16})">
+              ${o.name}
+            </text>
+
+            <text x="${x + barWidth / 2}" y="${chartBottom + 45}" font-size="9.5" fill="#64748b" text-anchor="end" transform="rotate(-35, ${x + barWidth / 2}, ${chartBottom + 45})">
+              ${o.pct_total}%
+            </text>
+          </g>
+        `;
+      });
+
+      wrapper.innerHTML = `
+        <svg viewBox="0 0 ${svgWidth} ${svgHeight + 20}" class="w-full h-auto overflow-visible select-none">
+          ${gridSvg}
+          <line x1="${chartLeft}" y1="${chartBottom}" x2="${chartRight}" y2="${chartBottom}" stroke="#cbd5e1" stroke-width="1.5" />
+          ${barsSvg}
+        </svg>
+      `;
+
+      legendEl.innerHTML = `
+        <div class="flex items-center gap-4">
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-blue-600"></span> Phiên bản iOS (Apple)</span>
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-600"></span> Phiên bản Android</span>
+        </div>
+        <div class="text-slate-400">iOS 26 và Android 16 là 2 phiên bản dẫn đầu áp đảo hệ sinh thái</div>
+      `;
+    }
+
+    // 3. Grouped Column Chart for MONTHLY COMPARISON
+    function renderMonthlyColumnChart(wrapper, titleEl, subtitleEl, legendEl) {
+      titleEl.innerText = "Biểu Đồ Cột Kép: So Sánh Người Dùng iOS vs Android Theo Tháng";
+      subtitleEl.innerText = "Diễn biến quy mô người dùng hàng tháng từ T8/2026 đến T11/2026 (1-6/11)";
+
+      const monthsData = [
+        { month: "Tháng 8/2026", ios: 16868, android: 15689, total: 32572 },
+        { month: "Tháng 9/2026", ios: 14055, android: 13733, total: 27801 },
+        { month: "Tháng 10/2026", ios: 15591, android: 16445, total: 32045 },
+        { month: "Tháng 11/2026*", ios: 6128, android: 6483, total: 12615 }
+      ];
+
+      const svgWidth = 960;
+      const svgHeight = 360;
+      const chartTop = 35;
+      const chartBottom = 270;
+      const chartLeft = 55;
+      const chartRight = 940;
+      const chartWidth = chartRight - chartLeft;
+      const chartHeight = chartBottom - chartTop;
+
+      const maxVal = 20000;
+      const groupCount = monthsData.length;
+      const groupWidth = chartWidth / groupCount;
+      const barWidth = 44;
+      const barGap = 8;
+
+      let gridSvg = '';
+      const gridSteps = 4;
+      for (let i = 0; i <= gridSteps; i++) {
+        const val = Math.round((maxVal / gridSteps) * i);
+        const y = chartBottom - (val / maxVal) * chartHeight;
+        gridSvg += `
+          <line x1="${chartLeft}" y1="${y}" x2="${chartRight}" y2="${y}" stroke="#e2e8f0" stroke-dasharray="3,3" />
+          <text x="${chartLeft - 8}" y="${y + 4}" font-size="10" fill="#94a3b8" text-anchor="end">${val.toLocaleString()}</text>
+        `;
+      }
+
+      let barsSvg = '';
+      monthsData.forEach((m, idx) => {
+        const groupCenterX = chartLeft + idx * groupWidth + groupWidth / 2;
+        const iosX = groupCenterX - barWidth - barGap / 2;
+        const andX = groupCenterX + barGap / 2;
+
+        const iosHeight = (m.ios / maxVal) * chartHeight;
+        const iosY = chartBottom - iosHeight;
+
+        const andHeight = (m.android / maxVal) * chartHeight;
+        const andY = chartBottom - andHeight;
+
+        barsSvg += `
+          <!-- GROUP: ${m.month} -->
+          <!-- iOS Bar -->
+          <g class="bar-group" 
+             onmouseenter="showTooltip(event, '${m.month}', 'Nền tảng iOS', 'iOS Toàn hệ thống', '${m.ios.toLocaleString()}', '${((m.ios / m.total) * 100).toFixed(1)}% tháng này')"
+             onmousemove="moveTooltip(event)"
+             onmouseleave="hideTooltip()">
+            <rect class="bar-rect" x="${iosX}" y="${iosY}" width="${barWidth}" height="${iosHeight}" rx="4" fill="#2563eb" />
+            <text x="${iosX + barWidth / 2}" y="${iosY - 6}" font-size="11" font-weight="700" fill="#1e40af" text-anchor="middle">${m.ios.toLocaleString()}</text>
+          </g>
+
+          <!-- Android Bar -->
+          <g class="bar-group" 
+             onmouseenter="showTooltip(event, '${m.month}', 'Nền tảng Android', 'Android Toàn hệ thống', '${m.android.toLocaleString()}', '${((m.android / m.total) * 100).toFixed(1)}% tháng này')"
+             onmousemove="moveTooltip(event)"
+             onmouseleave="hideTooltip()">
+            <rect class="bar-rect" x="${andX}" y="${andY}" width="${barWidth}" height="${andHeight}" rx="4" fill="#059669" />
+            <text x="${andX + barWidth / 2}" y="${andY - 6}" font-size="11" font-weight="700" fill="#047857" text-anchor="middle">${m.android.toLocaleString()}</text>
+          </g>
+
+          <!-- Group Month Label -->
+          <text x="${groupCenterX}" y="${chartBottom + 22}" font-size="12" font-weight="600" fill="#1e293b" text-anchor="middle">${m.month}</text>
+          <text x="${groupCenterX}" y="${chartBottom + 40}" font-size="10.5" fill="#64748b" text-anchor="middle">Tổng: ${m.total.toLocaleString()} users</text>
+        `;
+      });
+
+      wrapper.innerHTML = `
+        <svg viewBox="0 0 ${svgWidth} ${svgHeight + 10}" class="w-full h-auto overflow-visible select-none">
+          ${gridSvg}
+          <line x1="${chartLeft}" y1="${chartBottom}" x2="${chartRight}" y2="${chartBottom}" stroke="#cbd5e1" stroke-width="1.5" />
+          ${barsSvg}
+        </svg>
+      `;
+
+      legendEl.innerHTML = `
+        <div class="flex items-center gap-4">
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-blue-600"></span> Người dùng iOS</span>
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-600"></span> Người dùng Android</span>
+        </div>
+        <div class="text-slate-400">Từ T10/2026 Android bắt đầu vượt iOS về lượng người dùng hoạt động</div>
+      `;
+    }
+
+    // TOOLTIP HELPERS
+    const tooltip = document.getElementById('chart-tooltip');
+    function showTooltip(evt, name, model, os, users, pct) {
+      document.getElementById('tt-title').innerText = name;
+      document.getElementById('tt-model').innerText = model;
+      document.getElementById('tt-os').innerText = os;
+      document.getElementById('tt-users').innerText = users;
+      document.getElementById('tt-pct').innerText = pct;
+      
+      tooltip.style.opacity = '1';
+      moveTooltip(evt);
+    }
+
+    function moveTooltip(evt) {
+      const x = evt.clientX + 14;
+      const y = evt.clientY + 14;
+      tooltip.style.left = x + 'px';
+      tooltip.style.top = y + 'px';
+    }
+
+    function hideTooltip() {
+      tooltip.style.opacity = '0';
+    }
+
+    // ==========================================
+    // RENDER HORIZONTAL BARS & LISTS
+    // ==========================================
+    function renderDeviceBars() {
+      const container = document.getElementById('device-bars-container');
+      const filtered = getFilteredDevices();
+      const top25 = filtered.slice(0, 25);
+      
+      if (top25.length === 0) {
+        container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm">Không tìm thấy thiết bị phù hợp</div>';
+        return;
+      }
+
+      const maxUsers = top25[0].total || 1;
+      
+      let html = '';
+      top25.forEach((d, idx) => {
+        const pct = ((d.total / maxUsers) * 100).toFixed(1);
+        const isIOS = d.platform === 'iOS';
+        const barColor = isIOS ? 'bg-blue-600' : 'bg-emerald-600';
+        const badgeColor = isIOS ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        
+        html += `
+          <div class="p-2.5 rounded-xl border border-slate-100 hover:border-slate-300 hover:bg-slate-50/80 transition">
+            <div class="flex items-center justify-between text-xs sm:text-sm mb-1.5">
+              <div class="flex items-center gap-2 font-semibold text-slate-900 truncate">
+                <span class="w-5 text-center text-slate-400 font-mono text-xs">${idx + 1}</span>
+                <span class="truncate">${d.name}</span>
+                <span class="text-[11px] font-normal text-slate-400">(${d.model})</span>
+              </div>
+              <div class="flex items-center gap-2 flex-shrink-0">
+                <span class="px-2 py-0.5 rounded text-[11px] font-medium border ${badgeColor}">${d.main_os}</span>
+                <span class="font-bold text-slate-900 text-sm w-16 text-right">${d.total.toLocaleString()}</span>
+              </div>
+            </div>
+            
+            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+              <div class="${barColor} h-2 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+            </div>
+
+            <div class="flex items-center justify-between text-[11px] text-slate-400 mt-1">
+              <span>Hãng: <strong class="text-slate-600 font-medium">${d.brand}</strong></span>
+              <span>Chiếm <strong>${d.pct_total}</strong> toàn hệ thống (${d.pct_platform} trong ${d.platform})</span>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+      document.getElementById('device-count-badge').innerText = `Top ${top25.length} / ${filtered.length} máy`;
+    }
+
+    function renderOSBreakdown() {
+      const container = document.getElementById('os-breakdown-list');
+      const osList = RAW_DATA.overview.os_major;
+      
+      let filteredOS = osList;
+      if (currentPlatform === 'ios') {
+        filteredOS = osList.filter(o => o.platform === 'iOS');
+      } else if (currentPlatform === 'android') {
+        filteredOS = osList.filter(o => o.platform === 'Android');
+      }
+
+      const maxUsers = filteredOS[0]?.users || 1;
+
+      let html = '';
+      filteredOS.slice(0, 7).forEach(o => {
+        const pctBar = ((o.users / maxUsers) * 100).toFixed(1);
+        const isIOS = o.platform === 'iOS';
+        const dotBg = isIOS ? 'bg-blue-500' : 'bg-emerald-500';
+        
+        html += `
+          <div>
+            <div class="flex items-center justify-between text-xs mb-1">
+              <span class="font-semibold text-slate-800 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full ${dotBg}"></span>
+                ${o.name}
+              </span>
+              <span class="text-slate-600"><strong>${o.users.toLocaleString()}</strong> (${o.pct_total}%)</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+              <div class="h-1.5 rounded-full" style="width: ${pctBar}%; background-color: ${o.color}"></div>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function renderBrandShare() {
+      const container = document.getElementById('brand-share-list');
+      const brands = RAW_DATA.overview.brand_share;
+
+      let html = '';
+      brands.slice(0, 6).forEach(b => {
+        html += `
+          <div class="flex items-center justify-between text-xs py-1 border-b border-slate-100 last:border-0">
+            <span class="font-medium text-slate-800 flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${b.color}"></span>
+              ${b.brand}
+            </span>
+            <span class="font-semibold text-slate-700">${b.users.toLocaleString()} <span class="text-slate-400 font-normal">(${b.pct}%)</span></span>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function renderMonthlyTrend() {
+      const container = document.getElementById('monthly-trend-grid');
+      const months = RAW_DATA.overview.monthly;
+      const keys = ['T8', 'T9', 'T10', 'T11'];
+      
+      let html = '';
+      keys.forEach(k => {
+        const m = months[k];
+        let val = m.total;
+        if (currentPlatform === 'ios') val = m.ios;
+        if (currentPlatform === 'android') val = m.android;
+        
+        html += `
+          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+            <div class="text-[11px] font-semibold text-slate-400">${k}/2026</div>
+            <div class="text-sm font-bold text-slate-900 mt-1">${val.toLocaleString()}</div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('table-body');
+      const filtered = getFilteredDevices();
+      
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const end = start + PAGE_SIZE;
+      const paged = filtered.slice(start, end);
+
+      if (paged.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-6 text-slate-400">Không có dữ liệu phù hợp</td></tr>';
+        document.getElementById('table-record-count').innerText = '0 thiết bị';
+        return;
+      }
+
+      let html = '';
+      paged.forEach((d, idx) => {
+        const isIOS = d.platform === 'iOS';
+        const tagClass = isIOS ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        
+        html += `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-3 px-3 text-center font-mono text-slate-400">${start + idx + 1}</td>
+            <td class="py-3 px-3">
+              <span class="px-2 py-0.5 rounded text-[11px] font-semibold border ${tagClass}">${d.platform}</span>
+            </td>
+            <td class="py-3 px-3 font-medium text-slate-800">${d.brand}</td>
+            <td class="py-3 px-4 font-semibold text-slate-900">${d.name}</td>
+            <td class="py-3 px-3 font-mono text-xs text-slate-500">${d.model}</td>
+            <td class="py-3 px-3 text-slate-700">${d.main_os}</td>
+            <td class="py-3 px-3 text-right font-bold text-slate-900">${d.total.toLocaleString()}</td>
+            <td class="py-3 px-3 text-right text-slate-600">${d.pct_platform}</td>
+            <td class="py-3 px-3 text-right text-slate-600">${d.pct_total}</td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+      document.getElementById('table-record-count').innerText = `Hiển thị ${start + 1} - ${Math.min(end, filtered.length)} / ${filtered.length} thiết bị`;
+      
+      const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
+      document.getElementById('page-indicator').innerText = `Trang ${currentPage} / ${totalPages}`;
+      document.getElementById('btn-prev').disabled = currentPage <= 1;
+      document.getElementById('btn-next').disabled = currentPage >= totalPages;
+    }
+
+    function prevPage() {
+      if (currentPage > 1) {
+        currentPage--;
+        renderTable();
+      }
+    }
+
+    function nextPage() {
+      const filtered = getFilteredDevices();
+      const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderTable();
+      }
+    }
+
+    function renderDashboard() {
+      renderColumnChart();
+      renderDeviceBars();
+      renderOSBreakdown();
+      renderBrandShare();
+      renderMonthlyTrend();
+      renderTable();
+    }
+
+    // Init
+    window.addEventListener('DOMContentLoaded', () => {
+      renderDashboard();
+    });
+  </script>
+
+</body>
+</html>
